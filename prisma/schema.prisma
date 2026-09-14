@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  is_preferred Boolean  @default(false)
+  is_excluded  Boolean  @default(false)
+
+  problems  ProblemCompany[]
+  resources ResourceCompany[]
+}
+
+model Stage {
+  id            String  @id @default(cuid())
+  stage_label   String
+  title         String
+  insight_note  String
+  order         Int
+  is_bridge     Boolean @default(false)
+
+  problems Problem[]
+}
+
+enum Tier {
+  Core
+  Supp
+  Stretch
+}
+
+enum Difficulty {
+  Easy
+  Medium
+  Hard
+}
+
+model Problem {
+  id             String     @id @default(cuid())
+  title          String
+  stage_id       String
+  roadmap_order  Int
+  tier           Tier
+  is_priority    Boolean    @default(false)
+  difficulty     Difficulty
+  source_link    String?
+  is_solved      Boolean    @default(false)
+
+  stage     Stage            @relation(fields: [stage_id], references: [id])
+  companies ProblemCompany[]
+}
+
+enum ResourceType {
+  OAReport
+  InterviewExperience
+  Article
+  CoreSubject
+  Aptitude
+  Other
+}
+
+enum Credibility {
+  High
+  Medium
+  Low
+}
+
+model Resource {
+  id           String       @id @default(cuid())
+  title        String
+  topic        String?
+  type         ResourceType
+  link         String?
+  note         String?
+  credibility  Credibility
+  date_added   DateTime     @default(now())
+
+  companies ResourceCompany[]
+}
+
+model ProblemCompany {
+  problem_id String
+  company_id String
+
+  problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_id, company_id])
+}
+
+model ResourceCompany {
+  resource_id String
+  company_id  String
+
+  resource Resource @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  company  Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@id([resource_id, company_id])
+}
