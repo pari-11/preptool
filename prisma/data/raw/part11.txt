@@ -1,0 +1,93 @@
+Phonepe
+42 https://leetcode.com/problems/trapping-rain-water Trapping Rain Water Hard 67.70% 87.50%
+45 https://leetcode.com/problems/jump-game-ii Jump Game II Medium 43.10% 75.00%
+121 https://leetcode.com/problems/best-time-to-buy-and-sell-stock Best Time to Buy and Sell Stock Easy 57.00% 50.00%
+127 https://leetcode.com/problems/word-ladder Word Ladder Hard 46.00% 50.00%
+312 https://leetcode.com/problems/burst-balloons Burst Balloons Hard 63.90% 62.50%
+815 https://leetcode.com/problems/bus-routes Bus Routes Hard 47.40% 75.00%
+1235 https://leetcode.com/problems/maximum-profit-in-job-scheduling Maximum Profit in Job Scheduling Hard 54.80% 75.00%
+875 https://leetcode.com/problems/koko-eating-bananas Koko Eating Bananas Medium 50.20% 50.00%
+402 https://leetcode.com/problems/remove-k-digits Remove K Digits Medium 37.20% 75.00%
+880 https://leetcode.com/problems/decoded-string-at-index Decoded String at Index Medium 37.40% 75.00%
+947 https://leetcode.com/problems/most-stones-removed-with-same-row-or-column Most Stones Removed with Same Row or Column Medium 63.20% 87.50%
+56 https://leetcode.com/problems/merge-intervals Merge Intervals Medium 52.30% 50.00%
+135 https://leetcode.com/problems/candy Candy Hard 48.80% 50.00%
+406 https://leetcode.com/problems/queue-reconstruction-by-height Queue Reconstruction by Height Medium 74.80% 62.50%
+1438 https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit Medium 57.80% 62.50%
+5 https://leetcode.com/problems/longest-palindromic-substring Longest Palindromic Substring Medium 38.20% 87.50%
+198 https://leetcode.com/problems/house-robber House Robber Medium 53.40% 75.00%
+632 https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists Smallest Range Covering Elements from K Lists Hard 70.20% 100.00%
+2517 https://leetcode.com/problems/maximum-tastiness-of-candy-basket Maximum Tastiness of Candy Basket Medium 68.40% 50.00%
+2043 https://leetcode.com/problems/simple-bank-system Simple Bank System Medium 69.70% 50.00%
+2543 https://leetcode.com/problems/check-if-point-is-reachable Check if Point Is Reachable Hard 45.10% 50.00%
+1202 https://leetcode.com/problems/smallest-string-with-swaps Smallest String With Swaps Medium 60.80% 50.00%
+2948 https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements Make Lexicographically Smallest Array by Swapping Elements Medium 60.30% 75.00%
+639 https://leetcode.com/problems/decode-ways-ii Decode Ways II Hard 32.00% 50.00%
+75 https://leetcode.com/problems/sort-colors Sort Colors Medium 70.00% 50.00%
+882 https://leetcode.com/problems/reachable-nodes-in-subdivided-graph Reachable Nodes In Subdivided Graph Hard 52.40% 75.00%
+834 https://leetcode.com/problems/sum-of-distances-in-tree Sum of Distances in Tree Hard 65.70% 75.00%
+874 https://leetcode.com/problems/walking-robot-simulation Walking Robot Simulation Medium 64.60% 50.00%
+1130 https://leetcode.com/problems/minimum-cost-tree-from-leaf-values Minimum Cost Tree From Leaf Values Medium 67.90% 50.00%
+994 https://leetcode.com/problems/rotting-oranges Rotting Oranges Medium 59.00% 62.50%
+2995 https://leetcode.com/problems/viewers-turned-streamers Viewers Turned Streamers Hard 42.90% 100.00%
+3008 https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii Find Beautiful Indices in the Given Array II Hard 28.20% 100.00%
+378 https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix Kth Smallest Element in a Sorted Matrix Medium 64.80% 75.00%
+2968 https://leetcode.com/problems/apply-operations-to-maximize-frequency-score Apply Operations to Maximize Frequency Score Hard 39.40% 50.00%
+1590 https://leetcode.com/problems/make-sum-divisible-by-p Make Sum Divisible by P Medium 42.60% 62.50%
+221 https://leetcode.com/problems/maximal-square Maximal Square Medium 50.60% 62.50%
+146 https://leetcode.com/problems/lru-cache LRU Cache Medium 47.60% 50.00%
+3186 https://leetcode.com/problems/maximum-total-damage-with-spell-casting Maximum Total Damage With Spell Casting Medium 45.10% 50.00%
+2251 https://leetcode.com/problems/number-of-flowers-in-full-bloom Number of Flowers in Full Bloom Hard 58.00% 75.00%
+3405 https://leetcode.com/problems/count-the-number-of-arrays-with-k-matching-adjacent-elements Count the Number of Arrays with K Matching Adjacent Elements Hard 58.20% 100.00%
+3418 https://leetcode.com/problems/maximum-amount-of-money-robot-can-earn Maximum Amount of Money Robot Can Earn Medium 47.80% 100.00%
+239 https://leetcode.com/problems/sliding-window-maximum Sliding Window Maximum Hard 49.00% 50.00%
+3435 https://leetcode.com/problems/frequencies-of-shortest-supersequences Frequencies of Shortest Supersequences Hard 22.80% 100.00%
+2858 https://leetcode.com/problems/minimum-edge-reversals-so-every-node-is-reachable Minimum Edge Reversals So Every Node Is Reachable Hard 60.00% 62.50%
+659 https://leetcode.com/problems/split-array-into-consecutive-subsequences Split Array into Consecutive Subsequences Medium 52.40% 62.50%
+652 https://leetcode.com/problems/find-duplicate-subtrees Find Duplicate Subtrees Medium 60.80% 50.00%
+473 https://leetcode.com/problems/matchsticks-to-square Matchsticks to Square Medium 42.10% 75.00%
+128 https://leetcode.com/problems/longest-consecutive-sequence Longest Consecutive Sequence Medium 47.20% 50.00%
+735 https://leetcode.com/problems/asteroid-collision Asteroid Collision Medium 48.40% 62.50%
+57 https://leetcode.com/problems/insert-interval Insert Interval Medium 45.50% 50.00%
+55 https://leetcode.com/problems/jump-game Jump Game Medium 41.20% 50.00%
+1383 https://leetcode.com/problems/maximum-performance-of-a-team Maximum Performance of a Team Hard 47.80% 62.50%
+41 https://leetcode.com/problems/first-missing-positive First Missing Positive Hard 43.20% 50.00%
+475 https://leetcode.com/problems/heaters Heaters Medium 42.20% 50.00%
+1664 https://leetcode.com/problems/ways-to-make-a-fair-array Ways to Make a Fair Array Medium 67.30% 62.50%
+49 https://leetcode.com/problems/group-anagrams Group Anagrams Medium 72.90% 50.00%
+329 https://leetcode.com/problems/longest-increasing-path-in-a-matrix Longest Increasing Path in a Matrix Hard 56.80% 50.00%
+399 https://leetcode.com/problems/evaluate-division Evaluate Division Medium 64.40% 50.00%
+17 https://leetcode.com/problems/letter-combinations-of-a-phone-number Letter Combinations of a Phone Number Medium 66.40% 50.00%
+1751 https://leetcode.com/problems/maximum-number-of-events-that-can-be-attended-ii Maximum Number of Events That Can Be Attended II Hard 63.40% 50.00%
+851 https://leetcode.com/problems/loud-and-rich Loud and Rich Medium 63.80% 62.50%
+53 https://leetcode.com/problems/maximum-subarray Maximum Subarray Medium 53.50% 50.00%
+1657 https://leetcode.com/problems/determine-if-two-strings-are-close Determine if Two Strings Are Close Medium 54.40% 62.50%
+2929 https://leetcode.com/problems/distribute-candies-among-children-ii Distribute Candies Among Children II Medium 55.60% 75.00%
+410 https://leetcode.com/problems/split-array-largest-sum Split Array Largest Sum Hard 60.90% 50.00%
+1482 https://leetcode.com/problems/minimum-number-of-days-to-make-m-bouquets Minimum Number of Days to Make m Bouquets Medium 56.80% 87.50%
+2608 https://leetcode.com/problems/shortest-cycle-in-a-graph Shortest Cycle in a Graph Hard 40.00% 50.00%
+488 https://leetcode.com/problems/zuma-game Zuma Game Hard 29.50% 75.00%
+1319 https://leetcode.com/problems/number-of-operations-to-make-network-connected Number of Operations to Make Network Connected Medium 66.90% 62.50%
+134 https://leetcode.com/problems/gas-station Gas Station Medium 48.30% 62.50%
+1642 https://leetcode.com/problems/furthest-building-you-can-reach Furthest Building You Can Reach Medium 51.00% 62.50%
+2484 https://leetcode.com/problems/count-palindromic-subsequences Count Palindromic Subsequences Hard 41.50% 50.00%
+3608 https://leetcode.com/problems/minimum-time-for-k-connected-components Minimum Time for K Connected Components Medium 45.70% 50.00%
+2360 https://leetcode.com/problems/longest-cycle-in-a-graph Longest Cycle in a Graph Hard 50.90% 50.00%
+514 https://leetcode.com/problems/freedom-trail Freedom Trail Hard 59.40% 50.00%
+523 https://leetcode.com/problems/continuous-subarray-sum Continuous Subarray Sum Medium 31.50% 50.00%
+2603 https://leetcode.com/problems/collect-coins-in-a-tree Collect Coins in a Tree Hard 39.50% 75.00%
+864 https://leetcode.com/problems/shortest-path-to-get-all-keys Shortest Path to Get All Keys Hard 54.80% 50.00%
+546 https://leetcode.com/problems/remove-boxes Remove Boxes Hard 49.60% 50.00%
+10 https://leetcode.com/problems/regular-expression-matching Regular Expression Matching Hard 31.20% 50.00%
+15 https://leetcode.com/problems/3sum 3Sum Medium 39.40% 62.50%
+2104 https://leetcode.com/problems/sum-of-subarray-ranges Sum of Subarray Ranges Medium 61.50% 50.00%
+1035 https://leetcode.com/problems/uncrossed-lines Uncrossed Lines Medium 65.40% 50.00%
+542 https://leetcode.com/problems/01-matrix 01 Matrix Medium 54.40% 50.00%
+1 https://leetcode.com/problems/two-sum Two Sum Easy 57.80% 50.00%
+20 https://leetcode.com/problems/valid-parentheses Valid Parentheses Easy 44.50% 50.00%
+322 https://leetcode.com/problems/coin-change Coin Change Medium 48.70% 50.00%
+853 https://leetcode.com/problems/car-fleet Car Fleet Medium 55.40% 62.50%
+14 https://leetcode.com/problems/longest-common-prefix Longest Common Prefix Easy 47.90% 50.00%
+741 https://leetcode.com/problems/cherry-pickup Cherry Pickup Hard 39.90% 50.00%
+200 https://leetcode.com/problems/number-of-islands Number of Islands Medium 64.70% 50.00%
+803 https://leetcode.com/problems/bricks-falling-when-hit Bricks Falling When Hit Hard 37.50% 50.00%

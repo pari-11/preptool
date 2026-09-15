@@ -1,0 +1,52 @@
+Qualcomm
+1163 https://leetcode.com/problems/last-substring-in-lexicographical-order Last Substring in Lexicographical Order Hard 35.10% 87.50%
+3 https://leetcode.com/problems/longest-substring-without-repeating-characters Longest Substring Without Repeating Characters Medium 39.40% 87.50%
+20 https://leetcode.com/problems/valid-parentheses Valid Parentheses Easy 44.50% 87.50%
+9 https://leetcode.com/problems/palindrome-number Palindrome Number Easy 60.70% 87.50%
+852 https://leetcode.com/problems/peak-index-in-a-mountain-array Peak Index in a Mountain Array Medium 66.80% 87.50%
+25 https://leetcode.com/problems/reverse-nodes-in-k-group Reverse Nodes in k-Group Hard 66.60% 100.00%
+146 https://leetcode.com/problems/lru-cache LRU Cache Medium 47.60% 100.00%
+62 https://leetcode.com/problems/unique-paths Unique Paths Medium 67.00% 87.50%
+1 https://leetcode.com/problems/two-sum Two Sum Easy 57.80% 87.50%
+200 https://leetcode.com/problems/number-of-islands Number of Islands Medium 64.70% 87.50%
+169 https://leetcode.com/problems/majority-element Majority Element Easy 66.40% 87.50%
+
+Sig
+68 https://leetcode.com/problems/text-justification Text Justification Hard 51.50% 100.00%
+54 https://leetcode.com/problems/spiral-matrix Spiral Matrix Medium 57.20% 75.00%
+3161 https://leetcode.com/problems/block-placement-queries Block Placement Queries Hard 41.40% 75.00%
+2768 https://leetcode.com/problems/number-of-black-blocks Number of Black Blocks Medium 42.00% 75.00%
+1861 https://leetcode.com/problems/rotating-the-box Rotating the Box Medium 82.50% 75.00%
+48 https://leetcode.com/problems/rotate-image Rotate Image Medium 80.40% 87.50%
+1743 https://leetcode.com/problems/restore-the-array-from-adjacent-pairs Restore the Array From Adjacent Pairs Medium 75.10% 75.00%
+
+Snowflake
+210 https://leetcode.com/problems/course-schedule-ii Course Schedule II Medium 55.90% 87.50%
+202 https://leetcode.com/problems/happy-number Happy Number Easy 59.90% 87.50%
+588 https://leetcode.com/problems/design-in-memory-file-system Design In-Memory File System Hard 48.30% 87.50%
+438 https://leetcode.com/problems/find-all-anagrams-in-a-string Find All Anagrams in a String Medium 54.10% 62.50%
+2050 https://leetcode.com/problems/parallel-courses-iii Parallel Courses III Hard 66.80% 100.00%
+1236 https://leetcode.com/problems/web-crawler Web Crawler Medium 68.80% 62.50%
+1136 https://leetcode.com/problems/parallel-courses Parallel Courses Medium 62.30% 75.00%
+2742 https://leetcode.com/problems/painting-the-walls Painting the Walls Hard 49.20% 87.50%
+1235 https://leetcode.com/problems/maximum-profit-in-job-scheduling Maximum Profit in Job Scheduling Hard 54.80% 62.50%
+42 https://leetcode.com/problems/trapping-rain-water Trapping Rain Water Hard 67.70% 75.00%
+545 https://leetcode.com/problems/boundary-of-binary-tree Boundary of Binary Tree Medium 48.20% 75.00%
+261 https://leetcode.com/problems/graph-valid-tree Graph Valid Tree Medium 50.10% 62.50%
+347 https://leetcode.com/problems/top-k-frequent-elements Top K Frequent Elements Medium 66.80% 62.50%
+243 https://leetcode.com/problems/shortest-word-distance Shortest Word Distance Easy 66.40% 87.50%
+695 https://leetcode.com/problems/max-area-of-island Max Area of Island Medium 74.10% 62.50%
+641 https://leetcode.com/problems/design-circular-deque Design Circular Deque Medium 64.80% 62.50%
+207 https://leetcode.com/problems/course-schedule Course Schedule Medium 51.80% 62.50%
+1472 https://leetcode.com/problems/design-browser-history Design Browser History Medium 78.40% 62.50%
+827 https://leetcode.com/problems/making-a-large-island Making A Large Island Hard 56.90% 62.50%
+2062 https://leetcode.com/problems/count-vowel-substrings-of-a-string Count Vowel Substrings of a String Easy 73.30% 87.50%
+1600 https://leetcode.com/problems/throne-inheritance Throne Inheritance Medium 67.40% 87.50%
+1353 https://leetcode.com/problems/maximum-number-of-events-that-can-be-attended Maximum Number of Events That Can Be Attended Medium 39.00% 62.50%
+211 https://leetcode.com/problems/design-add-and-search-words-data-structure Design Add and Search Words Data Structure Medium 48.70% 62.50%
+2096 https://leetcode.com/problems/step-by-step-directions-from-a-binary-tree-node-to-another Step-By-Step Directions From a Binary Tree Node to Another Medium 56.50% 75.00%
+3092 https://leetcode.com/problems/most-frequent-ids Most Frequent IDs Medium 43.20% 62.50%
+71 https://leetcode.com/problems/simplify-path Simplify Path Medium 50.90% 62.50%
+886 https://leetcode.com/problems/possible-bipartition Possible Bipartition Medium 52.80% 62.50%
+2303 https://leetcode.com/problems/calculate-amount-paid-in-taxes Calculate Amount Paid in Taxes Easy 69.50% 62.50%
+427 https://leetcode.com/problems/construct-quad-tree Construct Quad Tree Medium 78.50% 62.50%

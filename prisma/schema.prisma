@@ -25,7 +25,7 @@ model Stage {
   order         Int
   is_bridge     Boolean @default(false)
 
-  problems Problem[]
+  problems ProblemStage[]
 }
 
 enum Tier {
@@ -41,18 +41,30 @@ enum Difficulty {
 }
 
 model Problem {
-  id             String     @id @default(cuid())
-  title          String
-  stage_id       String
-  roadmap_order  Int
-  tier           Tier
-  is_priority    Boolean    @default(false)
-  difficulty     Difficulty
-  source_link    String?
-  is_solved      Boolean    @default(false)
+  id              String      @id @default(cuid())
+  title           String
+  leetcode_id     Int?        @unique
+  difficulty      Difficulty
+  source_link     String?     @unique
+  acceptance_rate Float?
+  frequency       Float?
+  is_solved       Boolean     @default(false)
 
-  stage     Stage            @relation(fields: [stage_id], references: [id])
+  stages    ProblemStage[]
   companies ProblemCompany[]
+}
+
+model ProblemStage {
+  problem_id    String
+  stage_id      String
+  roadmap_order Int
+  tier          Tier?
+  is_priority   Boolean @default(false)
+
+  problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  stage   Stage   @relation(fields: [stage_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_id, stage_id])
 }
 
 enum ResourceType {
