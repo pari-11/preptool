@@ -44,11 +44,13 @@ model Problem {
   id              String      @id @default(cuid())
   title           String
   leetcode_id     Int?        @unique
-  difficulty      Difficulty
+  difficulty      Difficulty?
   source_link     String?     @unique
   acceptance_rate Float?
   frequency       Float?
   is_solved       Boolean     @default(false)
+  is_premium      Boolean     @default(false)
+  note            String?
 
   stages    ProblemStage[]
   companies ProblemCompany[]

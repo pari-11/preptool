@@ -49,9 +49,11 @@ Out of scope (later steps):
 | title | String | |
 | leetcode_id | Int? | unique, LeetCode's own numeric problem ID — the stable cross-source match key (see spec 002/003) |
 | stages | Stage[] | many-to-many, via join table ProblemStage — a problem can appear in more than one stage when it's worth a rep via a different technique (e.g. LC 268 Missing Number). Per-placement fields (roadmap_order, tier, is_priority) live on the join table, not here — see ProblemStage below. |
-| difficulty | Enum(Easy, Medium, Hard) | |
+| difficulty | Enum(Easy, Medium, Hard)? | optional — a roadmap-only problem not yet matched to a companywise import row has no known difficulty until then (see spec 003) |
 | source_link | String? | optional |
 | is_solved | Boolean | default false |
+| is_premium | Boolean | default false — LeetCode Premium required to view |
+| note | String? | optional — short inline context (e.g. "bridges toward Heap — see Stage 13", "also in Stage 2 via a different technique") |
 | companies | Company[] | many-to-many, via join table |
 
 ### ProblemStage (join table)
@@ -87,6 +89,7 @@ Out of scope (later steps):
 - Problem↔Company and Resource↔Company are both many-to-many. This is central to the tool: the same problem/resource must be visible under every company it's relevant to, so cross-company progress is accurate.
 - Problem↔Stage is many-to-many (not a single FK), decided when the roadmap data revealed a problem intentionally drilled twice via two different techniques (LC 268 Missing Number, in both Stage 2 and Stage 22). `roadmap_order`/`tier`/`is_priority` live on the `ProblemStage` join row, since they describe a specific placement, not the problem itself.
 - `Problem.leetcode_id` (unique, optional Int) stores LeetCode's own numeric problem ID — added as the stable match key between the companywise import (spec 002) and the roadmap import (spec 003), instead of matching on title text.
+- `Problem.is_premium` and `Problem.note` added to carry through the `(premium)` tags and inline bridging/context annotations present in the roadmap source (spec 003).
 - No AI/LLM involved anywhere in this step or in v1 generally.
 
 ## Acceptance criteria
