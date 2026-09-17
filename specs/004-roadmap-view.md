@@ -12,7 +12,7 @@ The first real page of the app: show the roadmap (Stage 0–22, in order) with e
 
 1. **Roadmap view first**, not the company view — this is the primary daily-use page. Company view is a separate later spec.
 2. **Read + solved toggle only.** No inline editing of tier, priority, notes, stage placement, or company links from this UI. Those remain edited via the markdown data files + import scripts.
-3. **No new UI dependency.** Plain CSS (a single stylesheet, no CSS-in-JS or utility framework) — this is a personal single-user tool, not a design system. Easy to swap for Tailwind or similar later if the styling need grows.
+3. **Tailwind CSS + shadcn/ui.** Superseded 2026-09-17 — plain CSS (the original decision here) wasn't good enough once the page was actually seen. Tailwind handles utility styling; shadcn/ui provides accessible component primitives (Card, Badge, Checkbox, Tooltip) that get copied into the repo rather than imported as a black box, so they stay easy to adjust. Stage sections become Cards, tier/difficulty become styled Badges, the per-problem note moves from cramped inline text to a Tooltip.
 4. **Server Components + a Server Action, no separate API routes.** Since there's no auth/multi-user yet (per the DB hosting note — Docker Postgres for v1, Neon planned for v2), the page queries Prisma directly in a Server Component, and the solved toggle is a single Server Action (`toggleSolved(problemId)`) that flips `Problem.is_solved` and revalidates the page. This avoids building a REST/API layer for a single mutation.
 5. **Route: this becomes the homepage** (`app/page.tsx`), replacing the current scaffold placeholder — the roadmap is the app's main purpose, no need for a separate `/roadmap` path yet.
 
@@ -31,7 +31,9 @@ In scope:
   - A checkbox reflecting `is_solved`, wired to the `toggleSolved` Server Action.
 - `toggleSolved(problemId: string)` Server Action in a new `app/actions.ts` (or colocated): flips `is_solved`, calls `revalidatePath('/')`.
 - A minimal top-of-page summary: total problems, total solved (simple count, not a full dashboard — that's a later spec).
-- A single plain CSS file (e.g. `app/globals.css`, imported from the root layout) covering readable typography, stage sections, and badge/checkbox styling. No component library.
+- Tailwind CSS installed and configured (`tailwind.config.ts`, `postcss.config.js`, Tailwind directives in `app/globals.css`).
+- shadcn/ui initialized, with Card, Badge, Checkbox, and Tooltip components added to `components/ui/`.
+- Rework the existing markup: each stage becomes a Card; difficulty/tier/priority/premium become Badge variants; the problem note becomes a Tooltip instead of inline text; the solved toggle uses the shadcn Checkbox instead of a bare `<input>`.
 
 Out of scope:
 - Company view (separate later spec).
@@ -49,7 +51,7 @@ Out of scope:
 - [ ] Clicking a problem's solved checkbox persists to the database (verified by reloading the page) and does not require a full page navigation.
 - [ ] A problem with `difficulty = null` (should be none currently, after the backfill, but the UI must not crash if one exists) renders without erroring.
 - [ ] Premium-flagged and priority-flagged problems are visually marked.
-- [ ] No new npm dependencies added for styling or state management.
+- [ ] No new npm dependencies added beyond Tailwind and the specific shadcn/ui components used (no unrelated state-management/UI libraries).
 
 ## Open items (not blocking, tracked for later)
 

@@ -1,19 +1,18 @@
 'use client';
 
 import { useTransition } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toggleSolved } from './actions';
 
 export function SolvedCheckbox({ problemId, isSolved }: { problemId: string; isSolved: boolean }) {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <input
-      type="checkbox"
-      className="solved-checkbox"
+    <Checkbox
       defaultChecked={isSolved}
       disabled={isPending}
-      onChange={(e) => {
-        const next = e.target.checked;
+      onCheckedChange={(checked) => {
+        const next = checked === true;
         startTransition(() => {
           toggleSolved(problemId, next);
         });
