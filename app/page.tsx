@@ -1,188 +1,210 @@
+import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { SolvedCheckbox } from './SolvedCheckbox';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, Lock } from 'lucide-react';
+import { isFiltering, parseFilters, placementMatches } from '@/lib/roadmapFilters';
+import type { TagInfo } from '@/lib/tags';
+import { ProgressBar } from '@/components/ProgressBar';
 import { cn } from '@/lib/utils';
+import { RoadmapFiltersPanel } from './RoadmapFilters';
+import { RoadmapNav, type NavItem } from './RoadmapNav';
+import { RoadmapShell } from './RoadmapShell';
+import { TagsProvider } from './TagsProvider';
+import {
+  GroupCard,
+  StageCard,
+  stageCounts,
+  stageInclude,
+  subTitle,
+  type StageProblems,
+  type StageRow,
+} from './StageSection';
 
-const DIFFICULTY_STYLES = {
-  Easy: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400',
-  Medium: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400',
-  Hard: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-400',
-} as const;
+type Group = NonNullable<StageRow['group']>;
+type Entry = { stage: StageRow; index: number; shown: StageProblems };
+type Block = ({ kind: 'stage' } & Entry) | { kind: 'group'; group: Group; stages: Entry[] };
 
-const TIER_STYLES = {
-  Core: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-400',
-  Supp: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
-  Stretch: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900 dark:bg-purple-950 dark:text-purple-400',
-} as const;
+const DIFFICULTIES = [
+  { key: 'Easy', bar: 'bg-emerald-500', dot: 'bg-emerald-500' },
+  { key: 'Medium', bar: 'bg-amber-500', dot: 'bg-amber-500' },
+  { key: 'Hard', bar: 'bg-rose-500', dot: 'bg-rose-500' },
+] as const;
 
-export default async function Home() {
-  const stages = await prisma.stage.findMany({
-    orderBy: { order: 'asc' },
-    include: {
-      problems: {
-        orderBy: { roadmap_order: 'asc' },
-        include: { problem: true },
-      },
-    },
+function StatTile({
+  label,
+  solved,
+  total,
+  barClassName,
+  dotClassName,
+}: {
+  label: string;
+  solved: number;
+  total: number;
+  barClassName?: string;
+  dotClassName?: string;
+}) {
+  const pct = total > 0 ? (solved / total) * 100 : 0;
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-xs">
+      <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          {dotClassName && <span className={cn('size-2 rounded-full', dotClassName)} />}
+          {label}
+        </span>
+        <span className="tabular-nums">{Math.round(pct)}%</span>
+      </div>
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className="text-2xl font-semibold tabular-nums tracking-tight">{solved}</span>
+        <span className="text-sm tabular-nums text-muted-foreground">/ {total}</span>
+      </div>
+      <ProgressBar value={pct} label={`${label}: ${solved} of ${total} solved`} className="mt-3" barClassName={barClassName} />
+    </div>
+  );
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
+  const [stages, tagRows] = await Promise.all([
+    prisma.stage.findMany({ orderBy: { order: 'asc' }, include: stageInclude }),
+    prisma.tag.findMany({
+      orderBy: [{ is_preset: 'desc' }, { created_at: 'asc' }, { name: 'asc' }],
+      include: { _count: { select: { problems: true } } },
+    }),
+  ]);
+
+  const tags: TagInfo[] = tagRows.map((t) => ({
+    id: t.id,
+    name: t.name,
+    color: t.color,
+    isPreset: t.is_preset,
+    count: t._count.problems,
+  }));
+  const collapsed = cookies().get('roadmap-nav')?.value === 'collapsed';
+
+  // Filters come from the URL. Tag ids that no longer exist (a deleted tag in an old link) are ignored.
+  const parsed = parseFilters(searchParams);
+  const knownTagIds = new Set(tagRows.map((t) => t.id));
+  const filters = { ...parsed, tag: parsed.tag.filter((id) => knownTagIds.has(id)) };
+  const filtering = isFiltering(filters);
+
+  // Each stage keeps its position number (`index`) so anchors are stable; `shown` is the rows that
+  // pass the filters. Stages with nothing to show drop out; counters still use the whole stage.
+  const entries: Entry[] = stages
+    .map((stage, index) => ({
+      stage,
+      index,
+      shown: filtering ? stage.problems.filter((p) => placementMatches(p, filters)) : stage.problems,
+    }))
+    .filter((entry) => entry.shown.length > 0);
+  const matchCount = new Set(entries.flatMap((e) => e.shown.map((p) => p.problem_id))).size;
+
+  // Stages sharing a group collapse into one block, placed where the group's first stage sits.
+  const blocks: Block[] = [];
+  const groupBlocks = new Map<string, Extract<Block, { kind: 'group' }>>();
+  for (const entry of entries) {
+    if (!entry.stage.group) {
+      blocks.push({ kind: 'stage', ...entry });
+      continue;
+    }
+    let block = groupBlocks.get(entry.stage.group.id);
+    if (!block) {
+      block = { kind: 'group', group: entry.stage.group, stages: [] };
+      groupBlocks.set(entry.stage.group.id, block);
+      blocks.push(block);
+    }
+    block.stages.push(entry);
+  }
+
+  // Headline numbers count each problem once, even if it sits in two stages (LC 268).
+  const problems = new Map<string, StageRow['problems'][number]['problem']>();
+  for (const stage of stages) {
+    for (const placement of stage.problems) problems.set(placement.problem.id, placement.problem);
+  }
+  const totalCount = problems.size;
+  const solvedCount = [...problems.values()].filter((p) => p.is_solved).length;
+  const byDifficulty = DIFFICULTIES.map((d) => {
+    const inTier = [...problems.values()].filter((p) => p.difficulty === d.key);
+    return { ...d, solved: inTier.filter((p) => p.is_solved).length, total: inTier.length };
   });
 
-  const seenProblemIds = new Set<string>();
-  let solvedCount = 0;
-  for (const stage of stages) {
-    for (const placement of stage.problems) {
-      if (!seenProblemIds.has(placement.problem.id)) {
-        seenProblemIds.add(placement.problem.id);
-        if (placement.problem.is_solved) solvedCount++;
-      }
+  const navItems: NavItem[] = blocks.map((block) => {
+    if (block.kind === 'stage') {
+      return {
+        type: 'stage',
+        anchor: `stage-${block.index}`,
+        label: block.stage.stage_label,
+        title: block.stage.title,
+      };
     }
-  }
-  const totalCount = seenProblemIds.size;
-  const percent = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
+    const counts = block.stages.map(({ stage }) => stageCounts(stage));
+    return {
+      type: 'group',
+      anchor: `group-${block.group.id}`,
+      title: block.group.title,
+      solved: counts.reduce((sum, c) => sum + c.solved, 0),
+      total: counts.reduce((sum, c) => sum + c.total, 0),
+      children: block.stages.map(({ stage, index }) => ({
+        anchor: `stage-${index}`,
+        label: stage.stage_label.replace(/^Stage\s+/, ''),
+        title: subTitle(stage),
+      })),
+    };
+  });
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="mx-auto flex max-w-5xl gap-8 px-4 py-10">
-        <aside className="sticky top-10 hidden h-fit max-h-[calc(100vh-5rem)] w-36 shrink-0 overflow-y-auto md:block">
-          <nav className="flex flex-col gap-0.5 text-sm">
-            {stages.map((stage, index) => (
-              <a
-                key={stage.id}
-                href={`#stage-${index}`}
-                className="truncate rounded px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                title={`${stage.stage_label} — ${stage.title}`}
-              >
-                {stage.stage_label}
-              </a>
-            ))}
-          </nav>
-        </aside>
+    <TagsProvider tags={tags}>
+      <RoadmapShell nav={<RoadmapNav items={navItems} />} initialCollapsed={collapsed}>
+        <header className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">DSA Roadmap</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {stages.length} stages · {totalCount} problems. Tick a problem when you solve it, then rate how it went.
+          </p>
+        </header>
 
-        <div className="min-w-0 flex-1">
-          <header className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">DSA Roadmap</h1>
-            <div className="mt-3 flex items-center gap-3">
-              <Progress value={percent} className="h-2 max-w-xs" />
-              <span className="whitespace-nowrap text-sm text-muted-foreground">
-                {solvedCount} / {totalCount} solved ({percent}%)
-              </span>
-            </div>
-          </header>
+        <section aria-label="Progress" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatTile label="Solved" solved={solvedCount} total={totalCount} />
+          {byDifficulty.map((d) => (
+            <StatTile
+              key={d.key}
+              label={d.key}
+              solved={d.solved}
+              total={d.total}
+              barClassName={d.bar}
+              dotClassName={d.dot}
+            />
+          ))}
+        </section>
 
-          <div className="flex flex-col gap-5">
-            {stages.map((stage, index) => {
-              const stageSolved = stage.problems.filter((p) => p.is_solved).length;
-              const stageTotal = stage.problems.length;
-
-              return (
-                <Card
-                  key={stage.id}
-                  id={`stage-${index}`}
-                  className={cn(
-                    'scroll-mt-10 shadow-sm',
-                    stage.is_bridge && 'border-violet-200 bg-violet-50/60 dark:border-violet-900 dark:bg-violet-950/20'
-                  )}
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between gap-4">
-                      <CardTitle className="text-base">
-                        <span className="font-bold">{stage.stage_label}</span>
-                        <span className="text-muted-foreground"> — {stage.title}</span>
-                      </CardTitle>
-                      <span className="shrink-0 text-xs font-medium text-muted-foreground">
-                        {stageSolved}/{stageTotal}
-                      </span>
-                    </div>
-                    {stage.insight_note && (
-                      <p className="text-sm italic text-muted-foreground/80">{stage.insight_note}</p>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="flex flex-col gap-2.5">
-                      {stage.problems.map((placement) => {
-                        const problem = placement.problem;
-                        return (
-                          <li
-                            key={placement.problem_id + placement.stage_id}
-                            className="flex flex-wrap items-center gap-2 border-t pt-2.5 first:border-t-0 first:pt-0"
-                          >
-                            <SolvedCheckbox
-                              problemId={problem.id}
-                              stageId={placement.stage_id}
-                              isSolved={placement.is_solved}
-                            />
-
-                            {problem.source_link ? (
-                              <a
-                                href={problem.source_link}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={cn(
-                                  'text-sm font-medium underline-offset-2 hover:underline',
-                                  placement.is_solved && 'text-muted-foreground line-through decoration-muted-foreground/50'
-                                )}
-                              >
-                                {problem.title}
-                              </a>
-                            ) : (
-                              <span
-                                className={cn(
-                                  'text-sm font-medium',
-                                  placement.is_solved && 'text-muted-foreground line-through'
-                                )}
-                              >
-                                {problem.title}
-                              </span>
-                            )}
-
-                            {problem.difficulty ? (
-                              <Badge variant="outline" className={DIFFICULTY_STYLES[problem.difficulty]}>
-                                {problem.difficulty}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-dashed text-muted-foreground">
-                                Unknown
-                              </Badge>
-                            )}
-
-                            {placement.tier && (
-                              <Badge variant="outline" className={TIER_STYLES[placement.tier]}>
-                                {placement.tier}
-                              </Badge>
-                            )}
-
-                            {placement.is_priority && (
-                              <span className="text-amber-500" title="Priority">
-                                ★
-                              </span>
-                            )}
-
-                            {problem.is_premium && (
-                              <Lock className="size-3.5 text-muted-foreground" aria-label="LeetCode Premium" />
-                            )}
-
-                            {problem.note && (
-                              <Tooltip>
-                                <TooltipTrigger className="inline-flex appearance-none border-0 bg-transparent p-0">
-                                  <Info className="size-3.5 text-muted-foreground" />
-                                </TooltipTrigger>
-                                <TooltipContent>{problem.note}</TooltipContent>
-                              </Tooltip>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+        <div className="mb-5">
+          <RoadmapFiltersPanel
+            filters={filters}
+            tags={tags}
+            matchCount={matchCount}
+            stageCount={entries.length}
+          />
         </div>
-      </div>
-    </div>
+
+        {blocks.length === 0 && (
+          <div className="rounded-xl border border-dashed bg-card px-6 py-12 text-center text-sm text-muted-foreground">
+            No problems match these filters.{' '}
+            <Link href="/" scroll={false} className="font-medium text-primary underline-offset-2 hover:underline">
+              Clear all filters
+            </Link>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-5">
+          {blocks.map((block) =>
+            block.kind === 'stage' ? (
+              <StageCard key={block.stage.id} stage={block.stage} index={block.index} problems={block.shown} />
+            ) : (
+              <GroupCard key={block.group.id} group={block.group} stages={block.stages} />
+            )
+          )}
+        </div>
+      </RoadmapShell>
+    </TagsProvider>
   );
 }

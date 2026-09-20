@@ -8,3 +8,6 @@ tsconfig.tsbuildinfo
 
 # Personal roadmap and source data — kept local only
 data/
+
+# Personal project context for Claude Code — kept local only
+CLAUDE.local.md

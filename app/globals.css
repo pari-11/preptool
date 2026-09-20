@@ -5,26 +5,28 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  color-scheme: light dark;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --border: oklch(0.922 0 0);
-  --muted: oklch(0.97 0 0);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Light by default; the .dark block below takes over when the theme switch (or the system
+     setting, before it is used) turns it on. color-scheme keeps native scrollbars in step. */
+  color-scheme: light;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --background: oklch(0.982 0.004 265);
+  --foreground: oklch(0.21 0.02 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.21 0.02 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.21 0.02 265);
+  --primary: oklch(0.511 0.23 277);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.962 0.007 265);
+  --secondary-foreground: oklch(0.25 0.02 265);
+  --muted: oklch(0.962 0.007 265);
+  --muted-foreground: oklch(0.5 0.02 265);
+  --accent: oklch(0.955 0.025 277);
+  --accent-foreground: oklch(0.36 0.16 277);
   --destructive: oklch(0.577 0.245 27.325);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.915 0.008 265);
+  --input: oklch(0.87 0.01 265);
+  --ring: oklch(0.62 0.16 277);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -85,37 +87,38 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  color-scheme: dark;
+  --background: oklch(0.155 0.016 265);
+  --foreground: oklch(0.955 0.006 265);
+  --card: oklch(0.205 0.018 265);
+  --card-foreground: oklch(0.955 0.006 265);
+  --popover: oklch(0.225 0.02 265);
+  --popover-foreground: oklch(0.955 0.006 265);
+  --primary: oklch(0.6 0.2 277);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.27 0.02 265);
+  --secondary-foreground: oklch(0.955 0.006 265);
+  --muted: oklch(0.25 0.02 265);
+  --muted-foreground: oklch(0.72 0.02 265);
+  --accent: oklch(0.31 0.07 277);
+  --accent-foreground: oklch(0.92 0.05 277);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.62 0.16 277);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0.018 265);
+  --sidebar-foreground: oklch(0.955 0.006 265);
+  --sidebar-primary: oklch(0.6 0.2 277);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.27 0.02 265);
+  --sidebar-accent-foreground: oklch(0.955 0.006 265);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.62 0.16 277);
 }
 
 @layer base {
@@ -126,6 +129,21 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
   }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Slim, unobtrusive scrollbars for inner scroll areas (e.g. the stage sidebar). */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.85 0.01 265) transparent;
+}
+.dark .scroll-thin {
+  scrollbar-color: oklch(0.38 0.02 265) transparent;
 }

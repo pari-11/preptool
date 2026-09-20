@@ -17,6 +17,15 @@ model Company {
   resources ResourceCompany[]
 }
 
+// A collective title over sibling stages (Stage 4A + 4B = "Two Pointers"). Display order
+// follows the stages' own order, so a group has no order of its own.
+model StageGroup {
+  id    String @id @default(cuid())
+  title String @unique
+
+  stages Stage[]
+}
+
 model Stage {
   id            String  @id @default(cuid())
   stage_label   String
@@ -24,8 +33,11 @@ model Stage {
   insight_note  String
   order         Int
   is_bridge     Boolean @default(false)
+  group_id      String?
 
+  group    StageGroup? @relation(fields: [group_id], references: [id], onDelete: SetNull)
   problems ProblemStage[]
+  reviews  ReviewLog[]
 }
 
 enum Tier {
@@ -52,8 +64,56 @@ model Problem {
   is_premium      Boolean     @default(false)
   note            String?
 
+  // Written by the user, never by the import scripts. `note` above is imported text.
+  confidence       Int? // 1-5, null = unrated. Range enforced in the server actions.
+  last_solved_date DateTime?
+  user_note        String?
+
   stages    ProblemStage[]
   companies ProblemCompany[]
+  reviews   ReviewLog[]
+  tags      ProblemTag[]
+}
+
+// User-defined labels ("Revisit", "Tricky", ...) on a problem's identity, not on a stage placement.
+// A few are pre-added (is_preset, seeded by the migration); they can be deleted like any other. Names are unique
+// case-insensitively; the server actions enforce that. `color` is a key into lib/tags.ts.
+model Tag {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  color      String
+  is_preset  Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  problems ProblemTag[]
+}
+
+model ProblemTag {
+  problem_id String
+  tag_id     String
+  created_at DateTime @default(now())
+
+  problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_id, tag_id])
+  @@index([tag_id])
+}
+
+// One row per solve event; unticking never deletes rows. stage_id is recorded only when the
+// problem sits in more than one stage; solved_at null means "solved, date unknown".
+model ReviewLog {
+  id                 String    @id @default(cuid())
+  problem_id         String
+  stage_id           String?
+  solved_at          DateTime?
+  confidence_at_time Int?
+  created_at         DateTime  @default(now())
+
+  problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  stage   Stage?  @relation(fields: [stage_id], references: [id], onDelete: SetNull)
+
+  @@index([problem_id])
 }
 
 model ProblemStage {

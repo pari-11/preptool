@@ -134,10 +134,31 @@ function parseFile(text: string): ParsedFile {
   return { stages, notes };
 }
 
+// Sibling stages share a number and differ by a letter suffix (Stage 4A, Stage 4B). Two or more
+// of them form a group, titled with the first sibling's title before " — "
+// ("Two Pointers — Opposite Direction" -> "Two Pointers"). Returns stage label -> group title.
+function deriveGroupTitles(stages: ParsedStage[]): Map<string, string> {
+  const byNumber = new Map<string, ParsedStage[]>();
+  for (const stage of stages) {
+    const m = /^Stage\s+(\d+)[A-Z]$/.exec(stage.label);
+    if (!m) continue;
+    byNumber.set(m[1], [...(byNumber.get(m[1]) ?? []), stage]);
+  }
+
+  const groupTitleByLabel = new Map<string, string>();
+  for (const siblings of byNumber.values()) {
+    if (siblings.length < 2) continue;
+    const title = siblings[0].title.split(' — ')[0].trim();
+    siblings.forEach((s) => groupTitleByLabel.set(s.label, title));
+  }
+  return groupTitleByLabel;
+}
+
 async function main() {
   const parsedFiles = FILES.map((f) => parseFile(readFileSync(join(DATA_DIR, f), 'utf-8')));
   const allStages = parsedFiles.flatMap((f) => f.stages);
   const notes = parsedFiles.map((f) => f.notes).find((n) => n !== null) ?? null;
+  const groupTitleByLabel = deriveGroupTitles(allStages);
 
   console.log(`Parsed ${allStages.length} stages across ${FILES.length} files.`);
 
@@ -153,11 +174,22 @@ async function main() {
   for (let stageOrder = 0; stageOrder < allStages.length; stageOrder++) {
     const parsed = allStages[stageOrder];
 
+    const groupTitle = groupTitleByLabel.get(parsed.label);
+    const group_id = groupTitle
+      ? (await prisma.stageGroup.upsert({ where: { title: groupTitle }, create: { title: groupTitle }, update: {} })).id
+      : null;
+
     let stage = await prisma.stage.findFirst({ where: { stage_label: parsed.label } });
     if (stage) {
       stage = await prisma.stage.update({
         where: { id: stage.id },
-        data: { title: parsed.title, insight_note: parsed.insightNote, order: stageOrder, is_bridge: parsed.isBridge },
+        data: {
+          title: parsed.title,
+          insight_note: parsed.insightNote,
+          order: stageOrder,
+          is_bridge: parsed.isBridge,
+          group_id,
+        },
       });
       stagesUpdated++;
     } else {
@@ -168,6 +200,7 @@ async function main() {
           insight_note: parsed.insightNote,
           order: stageOrder,
           is_bridge: parsed.isBridge,
+          group_id,
         },
       });
       stagesCreated++;
@@ -216,6 +249,9 @@ async function main() {
       stagePlacementCounts.set(p.leetcodeId, (stagePlacementCounts.get(p.leetcodeId) ?? 0) + 1);
     }
   }
+
+  const emptyGroups = await prisma.stageGroup.deleteMany({ where: { stages: { none: {} } } });
+  console.log(`Stage groups: ${new Set(groupTitleByLabel.values()).size} in use, ${emptyGroups.count} empty removed.`);
 
   if (notes) {
     const existing = await prisma.resource.findFirst({ where: { title: NOTES_RESOURCE_TITLE } });
