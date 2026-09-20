@@ -73,20 +73,26 @@ export async function saveNote(problemId: string, text: string) {
 export type CreatedTag = { id: string; name: string; color: string };
 export type CreateTagResult = { ok: true; tag: CreatedTag } | { ok: false; error: string };
 
-// Creates a custom tag (or reuses an existing one with the same name, ignoring case) and, when a
-// problem is given, puts it on that problem. Colour is picked from a fixed rotation.
-export async function createTag(rawName: string, applyToProblemId: string | null): Promise<CreateTagResult> {
+// Creates a custom tag (or reuses an existing one with the same name, ignoring case, keeping its
+// colour) and, when a problem is given, puts it on that problem. `color` is one of the palette
+// colours; without it the next colour in a fixed rotation is used.
+export async function createTag(
+  rawName: string,
+  applyToProblemId: string | null,
+  color?: string
+): Promise<CreateTagResult> {
   const name = cleanTagName(rawName);
   if (!name) return { ok: false, error: 'Give the tag a name.' };
   if (name.length > MAX_TAG_NAME_LENGTH) {
     return { ok: false, error: `Tag names can be at most ${MAX_TAG_NAME_LENGTH} characters.` };
   }
+  if (color !== undefined && !isTagColor(color)) return { ok: false, error: 'Pick one of the available colours.' };
 
   let tag = await prisma.tag.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });
   if (!tag) {
     const count = await prisma.tag.count({ where: { is_preset: false } });
     tag = await prisma.tag.create({
-      data: { name, color: CUSTOM_TAG_COLOR_ORDER[count % CUSTOM_TAG_COLOR_ORDER.length] },
+      data: { name, color: color ?? CUSTOM_TAG_COLOR_ORDER[count % CUSTOM_TAG_COLOR_ORDER.length] },
     });
   }
   if (applyToProblemId) {
@@ -114,12 +120,28 @@ export async function setProblemTag(problemId: string, tagId: string, on: boolea
   revalidateAll();
 }
 
-// Changes a tag's colour (any tag, presets included). Only the fixed palette in lib/tags.ts is
-// accepted; a tag that no longer exists is ignored.
-export async function setTagColor(tagId: string, color: string) {
-  if (!isTagColor(color)) throw new Error('Pick one of the available colours.');
-  await prisma.tag.updateMany({ where: { id: tagId }, data: { color } });
+// Renames a tag and/or changes its colour in one save (any tag, presets included). The name gets
+// the same cleaning and length limit as a new tag and must not clash, ignoring case, with another
+// tag (changing only the capitalisation of its own name is fine). The colour must be one of the
+// palette colours in lib/tags.ts.
+export async function updateTag(tagId: string, rawName: string, color: string): Promise<CreateTagResult> {
+  const name = cleanTagName(rawName);
+  if (!name) return { ok: false, error: 'Give the tag a name.' };
+  if (name.length > MAX_TAG_NAME_LENGTH) {
+    return { ok: false, error: `Tag names can be at most ${MAX_TAG_NAME_LENGTH} characters.` };
+  }
+  if (!isTagColor(color)) return { ok: false, error: 'Pick one of the available colours.' };
+
+  const clash = await prisma.tag.findFirst({
+    where: { id: { not: tagId }, name: { equals: name, mode: 'insensitive' } },
+    select: { name: true },
+  });
+  if (clash) return { ok: false, error: `There is already a tag called "${clash.name}".` };
+
+  const { count } = await prisma.tag.updateMany({ where: { id: tagId }, data: { name, color } });
+  if (count === 0) return { ok: false, error: 'That tag no longer exists.' };
   revalidateAll();
+  return { ok: true, tag: { id: tagId, name, color } };
 }
 
 // Deletes a tag everywhere, including the pre-added ones (someone who only wants custom tags can
