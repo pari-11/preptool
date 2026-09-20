@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Route } from 'lucide-react';
+import { Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [
   { href: '/', label: 'Roadmap', icon: Route, isActive: (p: string) => p === '/' || p.startsWith('/problems') },
-  { href: '/bulk-solved', label: 'Bulk import', icon: ListChecks, isActive: (p: string) => p.startsWith('/bulk-solved') },
 ];
 
 export function AppHeader() {
