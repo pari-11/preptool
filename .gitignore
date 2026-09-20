@@ -5,3 +5,6 @@ node_modules/
 *.log
 .DS_Store
 tsconfig.tsbuildinfo
+
+# Personal roadmap and source data — kept local only
+data/
