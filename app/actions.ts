@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { isValidConfidence } from '@/lib/confidence';
 import { clearSolved, recordSolve } from '@/lib/solve';
-import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName } from '@/lib/tags';
+import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor } from '@/lib/tags';
 
 function revalidateAll() {
   revalidatePath('/');
@@ -111,6 +111,14 @@ export async function setProblemTag(problemId: string, tagId: string, on: boolea
   } else {
     await prisma.problemTag.deleteMany({ where: { problem_id: problemId, tag_id: tagId } });
   }
+  revalidateAll();
+}
+
+// Changes a tag's colour (any tag, presets included). Only the fixed palette in lib/tags.ts is
+// accepted; a tag that no longer exists is ignored.
+export async function setTagColor(tagId: string, color: string) {
+  if (!isTagColor(color)) throw new Error('Pick one of the available colours.');
+  await prisma.tag.updateMany({ where: { id: tagId }, data: { color } });
   revalidateAll();
 }
 

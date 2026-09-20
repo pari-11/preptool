@@ -15,6 +15,13 @@ export const TAG_COLORS = {
 
 export type TagColor = keyof typeof TAG_COLORS;
 
+// The colours a tag can be given, in the order the picker shows them.
+export const TAG_COLOR_KEYS = Object.keys(TAG_COLORS) as TagColor[];
+
+export function isTagColor(value: string): value is TagColor {
+  return Object.prototype.hasOwnProperty.call(TAG_COLORS, value);
+}
+
 // New custom tags take these in turn (the presets already use amber, rose, violet, sky, emerald).
 export const CUSTOM_TAG_COLOR_ORDER: TagColor[] = [
   'indigo',
