@@ -99,7 +99,9 @@ async function main() {
   console.log(`Upserted ${companyIdByName.size} companies.`);
 
   const problemsById = new Map<number, ParsedRow>();
-  const companiesById = new Map<number, Set<string>>();
+  // company name -> that company's frequency % for this problem. Keyed per company because the
+  // source states the ask-rate per (company, problem); one number on the problem cannot hold it.
+  const companiesById = new Map<number, Map<string, number | null>>();
   const titleConflicts: string[] = [];
 
   for (const row of allRows) {
@@ -112,9 +114,9 @@ async function main() {
       );
     }
     if (!companiesById.has(row.leetcodeId)) {
-      companiesById.set(row.leetcodeId, new Set());
+      companiesById.set(row.leetcodeId, new Map());
     }
-    companiesById.get(row.leetcodeId)!.add(row.company);
+    companiesById.get(row.leetcodeId)!.set(row.company, row.frequency);
   }
 
   if (titleConflicts.length > 0) {
@@ -137,17 +139,18 @@ async function main() {
         source_link: row.url,
         difficulty: row.difficulty,
         acceptance_rate: row.acceptance,
-        frequency: row.frequency,
+        // Deliberately null: frequency belongs per company, on ProblemCompany below.
+        frequency: null,
       },
       update: {
         acceptance_rate: row.acceptance,
-        frequency: row.frequency,
+        frequency: null,
       },
     });
     created++;
 
     const companies = companiesById.get(leetcodeId)!;
-    for (const companyName of companies) {
+    for (const [companyName, frequency] of companies) {
       const companyId = companyIdByName.get(companyName)!;
       await prisma.problemCompany.upsert({
         where: {
@@ -156,8 +159,8 @@ async function main() {
             company_id: companyId,
           },
         },
-        create: { problem_id: problem.id, company_id: companyId },
-        update: {},
+        create: { problem_id: problem.id, company_id: companyId, frequency },
+        update: { frequency },
       });
       linked++;
     }

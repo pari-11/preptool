@@ -158,14 +158,20 @@ model Resource {
   companies ResourceCompany[]
 }
 
+// `frequency` is the source's ask-rate for this company on this problem — the true grain of the
+// number. `Problem.frequency` used to hold it, but a problem has one row there and many companies,
+// so it ended up holding whichever company the import happened to read first (Adobe's 75% on Two
+// Sum). Nothing reads `Problem.frequency`; it is left null by the import now.
 model ProblemCompany {
   problem_id String
   company_id String
+  frequency  Float?
 
   problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
   company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
 
   @@id([problem_id, company_id])
+  @@index([company_id])
 }
 
 model ResourceCompany {

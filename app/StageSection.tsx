@@ -5,11 +5,15 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PlacementRow } from './PlacementRow';
+import { ProblemCompanies } from './ProblemCompanies';
 import { ProblemTags } from './ProblemTags';
 
 export const stageInclude = {
   group: true,
-  problems: { orderBy: { roadmap_order: 'asc' }, include: { problem: { include: { tags: true } } } },
+  problems: {
+    orderBy: { roadmap_order: 'asc' },
+    include: { problem: { include: { tags: true, companies: { include: { company: true } } } } },
+  },
 } satisfies Prisma.StageInclude;
 
 export type StageRow = Prisma.StageGetPayload<{ include: typeof stageInclude }>;
@@ -127,6 +131,7 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
               </>
             }
           >
+            <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <Link
                 href={`/problems/${problem.id}`}
@@ -171,6 +176,8 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
               )}
 
               <ProblemTags problemId={problem.id} appliedIds={problem.tags.map((t) => t.tag_id)} />
+            </div>
+              <ProblemCompanies companies={problem.companies} />
             </div>
           </PlacementRow>
         );

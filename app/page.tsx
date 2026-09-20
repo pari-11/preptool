@@ -2,9 +2,12 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { isFiltering, parseFilters, placementMatches } from '@/lib/roadmapFilters';
+import { companySlug, type CompanyInfo } from '@/lib/companies';
+import { logoSrc } from '@/lib/companyLogos';
 import type { TagInfo } from '@/lib/tags';
 import { ProgressBar } from '@/components/ProgressBar';
 import { cn } from '@/lib/utils';
+import { CompanyWise } from './CompanyWise';
 import { RoadmapFiltersPanel } from './RoadmapFilters';
 import { RoadmapNav, type NavItem } from './RoadmapNav';
 import { RoadmapShell } from './RoadmapShell';
@@ -66,12 +69,13 @@ export default async function Home({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const [stages, tagRows] = await Promise.all([
+  const [stages, tagRows, companyRows] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: 'asc' }, include: stageInclude }),
     prisma.tag.findMany({
       orderBy: [{ is_preset: 'desc' }, { created_at: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { problems: true } } },
     }),
+    prisma.company.findMany({ where: { is_excluded: false }, orderBy: { name: 'asc' } }),
   ]);
 
   const tags: TagInfo[] = tagRows.map((t) => ({
@@ -83,10 +87,40 @@ export default async function Home({
   }));
   const collapsed = cookies().get('roadmap-nav')?.value === 'collapsed';
 
-  // Filters come from the URL. Tag ids that no longer exist (a deleted tag in an old link) are ignored.
+  // How much of the roadmap each company asks, counted over distinct problems so a problem sitting
+  // in two stages (LC 268) is not counted twice.
+  const roadmapProblemsByCompany = new Map<string, Set<string>>();
+  for (const stage of stages) {
+    for (const placement of stage.problems) {
+      for (const link of placement.problem.companies) {
+        let seen = roadmapProblemsByCompany.get(link.company_id);
+        if (!seen) roadmapProblemsByCompany.set(link.company_id, (seen = new Set()));
+        seen.add(placement.problem_id);
+      }
+    }
+  }
+  const companies: CompanyInfo[] = companyRows.map((c) => {
+    const slug = companySlug(c.name);
+    return {
+      id: c.id,
+      name: c.name,
+      slug,
+      isPreferred: c.is_preferred,
+      count: roadmapProblemsByCompany.get(c.id)?.size ?? 0,
+      logo: logoSrc(slug),
+    };
+  });
+
+  // Filters come from the URL. Tag ids and company slugs that no longer exist (from an old link)
+  // are ignored rather than filtering everything away.
   const parsed = parseFilters(searchParams);
   const knownTagIds = new Set(tagRows.map((t) => t.id));
-  const filters = { ...parsed, tag: parsed.tag.filter((id) => knownTagIds.has(id)) };
+  const knownCompanySlugs = new Set(companies.map((c) => c.slug));
+  const filters = {
+    ...parsed,
+    tag: parsed.tag.filter((id) => knownTagIds.has(id)),
+    company: parsed.company.filter((slug) => knownCompanySlugs.has(slug)),
+  };
   const filtering = isFiltering(filters);
 
   // Each stage keeps its position number (`index`) so anchors are stable; `shown` is the rows that
@@ -177,7 +211,8 @@ export default async function Home({
           ))}
         </section>
 
-        <div className="mb-5">
+        <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <CompanyWise filters={filters} companies={companies} />
           <RoadmapFiltersPanel
             filters={filters}
             tags={tags}

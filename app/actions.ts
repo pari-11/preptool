@@ -150,3 +150,10 @@ export async function deleteTag(tagId: string) {
   await prisma.tag.deleteMany({ where: { id: tagId } });
   revalidateAll();
 }
+
+// Stars a company as one the user is targeting. Preferred companies are the only ones shown under
+// a problem on the roadmap, so this is what makes those chips appear at all.
+export async function setCompanyPreferred(companyId: string, on: boolean) {
+  await prisma.company.updateMany({ where: { id: companyId }, data: { is_preferred: on } });
+  revalidateAll();
+}

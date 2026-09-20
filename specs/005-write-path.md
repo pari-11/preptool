@@ -1,12 +1,12 @@
-# Spec 005 — Write Path, Stage Groups, Tags, Filters and Roadmap UI
+# Spec 005 — Write Path, Stage Groups, Tags, Filters, Roadmap UI and Companies
 
-Status: Built (commits `264268b`, `8f9dc88`, `ca45c41`, `f80a2dd`) and checked against the running app, with the gaps listed under each Verification. Nothing was clicked in a real browser: interactions were checked through the server actions, rendered HTML and screenshots.
+Status: Built (commits `264268b`, `8f9dc88`, `ca45c41`, `f80a2dd`, and part F in the commit carrying this spec update) and checked against the running app, with the gaps listed under each Verification. Nothing was clicked in a real browser: interactions were checked through the server actions, rendered HTML and screenshots.
 Depends on: 001 (data model), 003 (roadmap data), 004 (roadmap view, per-placement solved state)
 Phase: 1 of the plan (write path). Phase 2 (dashboard, review queue, strengths/weaknesses) reads what this spec starts recording.
 
 ## How this spec grew
 
-It started as the write path (confidence, review history, problem page, bulk entry). At the user's request, and without separate specs, it then took on **stage grouping**, **tags** (including renaming them and changing their colours), **roadmap filters** and a **roadmap UI redesign** (theme, sidebar, dark mode). They are recorded here as parts B–E instead of new spec files. **Bulk entry was built and verified, then removed on 2026-09-20** (the user entered their solved problems by ticking them); the notes below say where. Spec 004's description of the roadmap view (cards, badges, tooltip) is superseded by part E; 004 itself was not edited.
+It started as the write path (confidence, review history, problem page, bulk entry). At the user's request, and without separate specs, it then took on **stage grouping**, **tags** (including renaming them and changing their colours), **roadmap filters**, a **roadmap UI redesign** (theme, sidebar, dark mode) and a **company layer** (preferred-company chips, the CompanyWise filter, per-company frequency). They are recorded here as parts B–F instead of new spec files. **Bulk entry was built and verified, then removed on 2026-09-20** (the user entered their solved problems by ticking them); the notes below say where. Spec 004's description of the roadmap view (cards, badges, tooltip) is superseded by part E; 004 itself was not edited.
 
 ## Part A — Write path
 
@@ -250,6 +250,55 @@ Out of scope: a dashboard (Phase 2); a mobile navigation for the stage list; use
 
 Screenshots (headless Chrome and Edge, light and dark, desktop and a 390px iframe) of the live app and the scratch copy, plus rendered-HTML checks with and without the sidebar cookie. **Not verified:** all clicks and scrolling (see the unticked criterion).
 
+## Part F — Companies on the roadmap
+
+### Goal
+
+Answer "which of the companies I'm targeting ask this problem?" while reading the roadmap, and let the roadmap be narrowed to one company's problems. This is the first piece of the personalisation idea in CLAUDE.local.md Part 1: the display and filtering half, which needs no inference. It also fixes `Problem.frequency`, which held the wrong thing.
+
+### Decisions (confirmed)
+
+C1. **Only starred (preferred) companies appear under a problem.** Every roadmap problem is asked by a dozen-odd companies; listing them all would drown the row. `Company.is_preferred` already existed and is what the chips read. With nothing starred the row shows nothing at all.
+C2. **A separate "CompanyWise" button, not a section inside "Filter by".** Picking one company to study is a different action from narrowing a list, so it gets its own control next to the filter button. It is still an ordinary filter underneath, AND-ed with the others.
+C3. **Starring and filtering live in the same panel.** Both answer "which companies do I care about", and splitting them across two screens would mean setting the same list twice. Clicking a company filters; the star beside it marks it preferred.
+C4. **The chips are a native `<details>`**, collapsed to a chevron, a stack of up to four logos and "N companies". No JavaScript, so the roadmap row stays a Server Component.
+C5. **`frequency` moves to `ProblemCompany`** (migration `add_company_frequency_and_index`, plus an index on `company_id`). The source states an ask-rate per (company, problem); `Problem.frequency` has one row per problem and so held whichever company the import read first — Adobe's 75% on Two Sum. The import now writes `Problem.frequency = null`. Nothing read it, so nothing broke.
+C6. **Company slugs, not ids, in the URL** (`?company=goldman-sachs`), so a filtered link stays readable. Unknown slugs are ignored, like unknown tag ids (F6).
+C7. **Logos are files under `public/companies/<slug>.<ext>`**, resolved on the server. A company with no file falls back to its initials on a colour derived from its name. The directory is read once per server process. Formats rank `svg > png > webp > jpg > jpeg > ico`, so a better file can be dropped in later without deleting the old one.
+C8. **Excluded companies are left out** of the panel entirely (`Company.is_excluded`, already in the schema, currently false everywhere).
+
+### Scope
+
+In scope: migration `add_company_frequency_and_index`; `import-companies.ts` carrying frequency per company and nulling `Problem.frequency`; `lib/companies.ts` (slug, initials, tint — pure, importable from client code); `lib/companyLogos.ts` (`server-only`, filesystem lookup); `app/CompanyLogo.tsx` and the client twin inside `CompanyWise`; `app/ProblemCompanies.tsx` (the `<details>` chips); `app/CompanyWise.tsx` (search, star, filter, counts); `company` added to `lib/roadmapFilters.ts`; per-company roadmap counts in `app/page.tsx`; `setCompanyPreferred` in `app/actions.ts`; 44 logo files and `public/companies/README.md`.
+
+Out of scope: the company detail view and off-roadmap gap analysis (Phase 4); using frequency to rank or sort anything (the chips are alphabetical); showing companies on `/problems/[id]` beyond what part A already renders; the source-window field discussed in CLAUDE.local.md (needs data the raw files do not carry); a UI for `is_excluded`; pulling in off-roadmap company questions (Phase 5).
+
+### Acceptance criteria
+
+- [x] Migration applies with existing data intact: 40 solved placements and 43 `ReviewLog` rows unchanged afterwards (`pg_dump` taken first).
+- [x] After re-running `import-companies.ts`, `ProblemCompany.frequency` is set on 1738 of 1739 rows (the one null is IMC's truncated Trapping Rain Water row the parser already documented) and `Problem.frequency` is non-null on 0 rows.
+- [x] The company filter returns what the database does: 154 problems unfiltered, 103 for Amazon (matching the `psql` count exactly), 6 for Adobe.
+- [x] With companies starred, each matching row renders a `<details>` listing exactly the starred companies that ask it and no others (6 rows for Adobe, 3 of them also Google).
+- [x] A company with no logo file renders its initials (AD, GO) instead of a broken image.
+- [x] Logo files are served with the right content type: `.svg` → `image/svg+xml`, `.png` → `image/png`, `.ico` → `image/x-icon`, all 200.
+- [x] An unknown company slug in the URL is ignored and the full roadmap is shown.
+- [x] `npx tsc --noEmit` is clean; `lib/companies.ts` stays free of Node imports so the client bundle does not pull in `fs`.
+- [ ] `setCompanyPreferred` is exercised through the action rather than SQL. *(Not done — see Verification.)*
+- [ ] In a real browser: the CompanyWise popover opens, the search box filters the list, the star toggles and persists, and the `>` expands.
+- [ ] The logo images are visually correct (right brand, legible at 14px). *(Fetched and served, never looked at.)*
+
+### Verification
+
+Checked 2026-09-20 on the running app and the live Docker database, after a `pg_dump` into the session scratchpad. The migration and the import re-run were run against the live database (both additive: the import only upserts and never deletes, and its `Problem` update payload touches `acceptance_rate` and `frequency` only). Solved and rating state was counted before and after and was unchanged.
+
+Counts came from `psql` and from counting distinct `/problems/<id>` links in the rendered HTML. To see the chips at all, Adobe, Google, Microsoft and Amazon were starred **with a direct SQL update**, the rendered page was checked, and every company was then set back to `is_preferred = false` — the state this part was found in, and the state it is being committed in.
+
+**Not verified**
+- `setCompanyPreferred` itself. The star was set in SQL, so the action's own path (and `revalidatePath` refreshing the chips) has not run once. It is four lines and mirrors `deleteTag`, but it is untested.
+- Every click listed in the unticked criterion above, consistent with the rest of this spec.
+- The logo images themselves were never viewed. 24 came from Simple Icons (CC0, recoloured to each brand's hex), 20 from public favicon endpoints (DuckDuckGo, Google as fallback); files with identical byte lengths were hash-checked to rule out a shared placeholder icon, but nothing confirms each image is the brand it claims. BlackRock, Citadel and Millenium have no file and fall back to initials.
+- Whether `imc.ico` (306 KB) is worth keeping at chip size; it only loads if IMC is starred.
+
 ## Open items
 
 - **Decisions 8–10** were built as proposed and not explicitly confirmed; decision 10 has no code yet.
@@ -261,4 +310,6 @@ Screenshots (headless Chrome and Edge, light and dark, desktop and a 390px ifram
 - **Filters:** tag counts in the filter count problems, not placements; the rating filter matches only solved placements.
 - **Dark mode** follows the system on a first visit; an explicit choice is stored per browser (localStorage), not per user.
 - **Sidebar** is hidden below `lg`; there is no mobile stage navigation.
+- **Companies:** nothing is starred, so the chips are invisible until the user stars something — the feature looks absent on first load. `ProblemCompany.frequency` is now correct but unused; ordering the chips by it is the obvious next use. Three companies have no logo, and the 20 favicon-sourced files are lower quality than the 24 vector ones. The per-company **source window** (some of `prisma/data/raw/` is the 6+ month bucket by deliberate choice) is still recorded nowhere, which will matter for Phase 4 gap analysis.
+- **Row alignment:** `PlacementRow` still centres its columns vertically, so on a row with company chips the checkbox and badges sit against a two-line block. Not looked at in a browser.
 - **Browser check:** every interactive behaviour above still needs one real click-through.
