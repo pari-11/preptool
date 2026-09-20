@@ -62,6 +62,7 @@ model ProblemStage {
   roadmap_order Int
   tier          Tier?
   is_priority   Boolean @default(false)
+  is_solved     Boolean @default(false)
 
   problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
   stage   Stage   @relation(fields: [stage_id], references: [id], onDelete: Cascade)

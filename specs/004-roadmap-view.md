@@ -45,13 +45,29 @@ Out of scope:
 
 ## Acceptance criteria
 
-- [ ] Visiting the homepage shows all 39 stages in their correct order, each with its problems in `roadmap_order`.
-- [ ] LC 268 (Missing Number) appears in both its stage placements (Stage 2 and Stage 22) as two separate rows — this is expected, not a bug.
-- [ ] Bridge stages (e.g. "Bridge B") are visually distinguishable from numbered stages.
-- [ ] Clicking a problem's solved checkbox persists to the database (verified by reloading the page) and does not require a full page navigation.
-- [ ] A problem with `difficulty = null` (should be none currently, after the backfill, but the UI must not crash if one exists) renders without erroring.
-- [ ] Premium-flagged and priority-flagged problems are visually marked.
-- [ ] No new npm dependencies added beyond Tailwind and the specific shadcn/ui components used (no unrelated state-management/UI libraries).
+- [x] Visiting the homepage shows all 39 stages in their correct order, each with its problems in `roadmap_order`.
+- [x] LC 268 (Missing Number) appears in both its stage placements (Stage 2 and Stage 22) as two separate rows — this is expected, not a bug.
+- [x] Bridge stages (e.g. "Bridge B") are visually distinguishable from numbered stages.
+- [x] Clicking a problem's solved checkbox persists to the database (verified by reloading the page) and does not require a full page navigation.
+- [x] A problem with `difficulty = null` (should be none currently, after the backfill, but the UI must not crash if one exists) renders without erroring.
+- [x] Premium-flagged and priority-flagged problems are visually marked.
+- [x] No new npm dependencies added beyond Tailwind and the specific shadcn/ui components used (no unrelated state-management/UI libraries).
+
+## Verification (2026-09-20)
+
+Checked against the running app and Docker Postgres:
+
+- 39 stages rendered, in the same order as `Stage.order` in the DB; 155 placements / 154 unique problems.
+- LC 268 renders as two rows (Stage 2, Stage 22).
+- Only Bridge B (`stage-3`) carries the violet bridge styling.
+- 28 ★ on the page = 28 `is_priority` placements in the DB; 6 🔒 on the page = 6 premium placements.
+- Solved toggle: called the real `toggleSolved` server action over HTTP, then re-fetched the page. State persisted and the headline count updated. Not clicked in a real browser, so "no full page navigation" rests on the code path (`useTransition` + server action + `revalidatePath`, no redirect).
+- Null difficulty: there are 0 such rows in the DB, so the "Unknown" badge path was checked by reading the code, not exercised.
+- Dependencies: everything beyond Tailwind comes from the shadcn setup (`@base-ui/react`, `class-variance-authority`, `lucide-react`, `tw-animate-css`, `shadcn`, and `cn`, which is shadcn's own package replacing `clsx` + `tailwind-merge`). `Progress` was added by the redesign and is used. `components/ui/button.tsx` is unused.
+
+## Changes since this spec was written
+
+- **Solved state is per placement.** `ProblemStage.is_solved` (migration `add_placement_solved`) drives the checkboxes, so ticking LC 268 in Stage 2 leaves Stage 22 unchecked. `Problem.is_solved` remains as the roll-up ("solved in at least one placement") and feeds the headline count. `toggleSolved` now takes `(problemId, stageId, nextValue)`. This supersedes decision 4's "flips `Problem.is_solved`".
 
 ## Open items (not blocking, tracked for later)
 

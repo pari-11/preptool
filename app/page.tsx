@@ -74,7 +74,7 @@ export default async function Home() {
 
           <div className="flex flex-col gap-5">
             {stages.map((stage, index) => {
-              const stageSolved = stage.problems.filter((p) => p.problem.is_solved).length;
+              const stageSolved = stage.problems.filter((p) => p.is_solved).length;
               const stageTotal = stage.problems.length;
 
               return (
@@ -109,7 +109,11 @@ export default async function Home() {
                             key={placement.problem_id + placement.stage_id}
                             className="flex flex-wrap items-center gap-2 border-t pt-2.5 first:border-t-0 first:pt-0"
                           >
-                            <SolvedCheckbox problemId={problem.id} isSolved={problem.is_solved} />
+                            <SolvedCheckbox
+                              problemId={problem.id}
+                              stageId={placement.stage_id}
+                              isSolved={placement.is_solved}
+                            />
 
                             {problem.source_link ? (
                               <a
@@ -118,7 +122,7 @@ export default async function Home() {
                                 rel="noreferrer"
                                 className={cn(
                                   'text-sm font-medium underline-offset-2 hover:underline',
-                                  problem.is_solved && 'text-muted-foreground line-through decoration-muted-foreground/50'
+                                  placement.is_solved && 'text-muted-foreground line-through decoration-muted-foreground/50'
                                 )}
                               >
                                 {problem.title}
@@ -127,7 +131,7 @@ export default async function Home() {
                               <span
                                 className={cn(
                                   'text-sm font-medium',
-                                  problem.is_solved && 'text-muted-foreground line-through'
+                                  placement.is_solved && 'text-muted-foreground line-through'
                                 )}
                               >
                                 {problem.title}

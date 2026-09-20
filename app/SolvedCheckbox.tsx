@@ -4,7 +4,15 @@ import { useTransition } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toggleSolved } from './actions';
 
-export function SolvedCheckbox({ problemId, isSolved }: { problemId: string; isSolved: boolean }) {
+export function SolvedCheckbox({
+  problemId,
+  stageId,
+  isSolved,
+}: {
+  problemId: string;
+  stageId: string;
+  isSolved: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -14,7 +22,7 @@ export function SolvedCheckbox({ problemId, isSolved }: { problemId: string; isS
       onCheckedChange={(checked) => {
         const next = checked === true;
         startTransition(() => {
-          toggleSolved(problemId, next);
+          toggleSolved(problemId, stageId, next);
         });
       }}
       aria-label="Mark solved"
