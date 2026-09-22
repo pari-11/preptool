@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { isValidConfidence } from '@/lib/confidence';
-import { clearSolved, recordReview, recordSolve } from '@/lib/solve';
+import { clearSolved, recordReview, recordSolve, undoLastRevisit } from '@/lib/solve';
 import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor } from '@/lib/tags';
 
 function revalidateAll() {
@@ -36,6 +36,12 @@ export async function logSolve(problemId: string, stageId: string | null) {
 // see lib/solve.ts for why only Revise resets the review queue's staleness clock.
 export async function logReview(problemId: string, stageId: string | null, kind: 'Revised' | 'Revisited') {
   await prisma.$transaction((tx) => recordReview(tx, problemId, stageId, kind));
+  revalidateAll();
+}
+
+// Undo for an accidental Revisited? click — removes the most recent Revisited row only.
+export async function undoRevisit(problemId: string) {
+  await prisma.$transaction((tx) => undoLastRevisit(tx, problemId));
   revalidateAll();
 }
 

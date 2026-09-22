@@ -216,15 +216,14 @@ export default async function ProblemPage({ params }: { params: { id: string } }
               History{' '}
               {problem.reviews.length > 0 && (
                 <span className="text-sm font-normal text-muted-foreground">
-                  — {problem.reviews.length} {problem.reviews.length === 1 ? 'review' : 'reviews'}: {reviewCounts.Solved}{' '}
-                  solved · {reviewCounts.Revised} revised · {reviewCounts.Revisited} revisited
+                  — {reviewCounts.Solved} solved · {reviewCounts.Revisited} revisited
                 </span>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {problem.reviews.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No solves recorded yet.</p>
+              <p className="text-sm text-muted-foreground">No solves or revisits recorded yet.</p>
             ) : (
               <ul className="flex flex-col gap-2 text-sm">
                 {problem.reviews.map((review) => (

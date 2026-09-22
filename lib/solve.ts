@@ -86,6 +86,20 @@ export async function recordReview(
   }
 }
 
+// Removes the most recent 'Revisited' log row, if any — for the undo button next to the
+// Revisited? counter on an accidental click. Never touches Solved or Revised rows, and does
+// nothing (not an error) if there's nothing to undo.
+export async function undoLastRevisit(tx: Tx, problemId: string) {
+  const last = await tx.reviewLog.findFirst({
+    where: { problem_id: problemId, event_type: 'Revisited' },
+    orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+    select: { id: true },
+  });
+  if (last) {
+    await tx.reviewLog.delete({ where: { id: last.id } });
+  }
+}
+
 // Unticking only flips the solved flag. History, rating, dates and the note are kept.
 export async function clearSolved(tx: Tx, problemId: string, stageId: string | null) {
   if (stageId) {
