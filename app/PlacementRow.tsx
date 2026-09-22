@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { ConfidencePicker } from './ConfidencePicker';
-import { LogReview } from './LogReview';
 import { SolvedCheckbox } from './SolvedCheckbox';
 
 // One roadmap row: the solved checkbox, the problem's content (`children`), fixed-width badge
@@ -35,7 +34,6 @@ export function PlacementRow({
       <div className={cn('min-w-0 flex-1', isSolved && 'text-muted-foreground')}>{children}</div>
       <div className="flex basis-full items-center gap-2 pl-7 sm:basis-auto sm:pl-0">
         {meta}
-        <LogReview problemId={problemId} stageId={stageId} />
         <div className="ml-auto flex justify-end sm:ml-0 sm:w-[8.75rem]">
           {solved && <ConfidencePicker problemId={problemId} current={isSolved ? confidence : null} />}
         </div>

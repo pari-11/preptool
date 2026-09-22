@@ -54,6 +54,10 @@ export default async function ProblemPage({ params }: { params: { id: string } }
   if (!problem) notFound();
   const reviewCounts = { Solved: 0, Revised: 0, Revisited: 0 };
   for (const review of problem.reviews) reviewCounts[review.event_type]++;
+  // Best-effort target for the "Resolved" quick-log checkbox on a problem with several stages —
+  // the per-placement checkboxes and Re-solve's own stage picker above remain the precise way to
+  // solve/re-solve a specific stage.
+  const primaryStageId = problem.stages[0]?.stage_id ?? null;
   const tags = tagRows.map((t) => ({
     id: t.id,
     name: t.name,
@@ -170,9 +174,9 @@ export default async function ProblemPage({ params }: { params: { id: string } }
               />
             )}
 
-            <div className="flex items-center gap-2 border-t pt-3 text-sm text-muted-foreground">
-              Just looked, or read it over without re-solving?
-              <LogReview problemId={problem.id} stageId={null} />
+            <div className="flex flex-col gap-1.5 border-t pt-3">
+              <span className="text-sm text-muted-foreground">Log a review</span>
+              <LogReview problemId={problem.id} stageId={primaryStageId} />
             </div>
           </CardContent>
         </Card>

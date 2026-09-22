@@ -26,13 +26,10 @@ export async function ReviewQueueCard() {
       {queue.items.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">Nothing due for review right now.</p>
       ) : (
-        <ul className="mt-3 flex flex-col gap-1">
+        <ul className="mt-3 flex flex-col gap-2.5">
           {queue.items.map((item) => (
-            <li key={item.id} className="flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-muted">
-              <Link
-                href={`/problems/${item.id}`}
-                className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-sm"
-              >
+            <li key={item.id} className="rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
+              <Link href={`/problems/${item.id}`} className="flex items-center gap-2 text-sm">
                 {item.difficulty && (
                   <span className={cn('size-1.5 shrink-0 rounded-full', DIFFICULTY_DOT[item.difficulty])} />
                 )}
@@ -41,7 +38,9 @@ export async function ReviewQueueCard() {
                   {overdueLabel(item.daysOverdue)}
                 </span>
               </Link>
-              <LogReview problemId={item.id} stageId={null} />
+              <div className="mt-1.5">
+                <LogReview problemId={item.id} stageId={item.stageId} />
+              </div>
             </li>
           ))}
         </ul>
