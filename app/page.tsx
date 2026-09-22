@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { getRoadmapStats } from '@/lib/roadmapStats';
 import { ProgressBar } from '@/components/ProgressBar';
 import { cn } from '@/lib/utils';
+import { NextUpCard } from './NextUpCard';
 
 // Progress at a glance, minimized: the same numbers the roadmap page's four tiles show (see
 // lib/roadmapStats.ts), condensed into one card since the dashboard has other sections to fit.
@@ -53,6 +54,10 @@ export default function Home() {
           Where things stand, and what's worth looking at next.
         </p>
       </header>
+
+      <section aria-label="Next up" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <NextUpCard />
+      </section>
 
       <section aria-label="Progress at a glance" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <RoadmapProgressCard />

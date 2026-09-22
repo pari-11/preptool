@@ -1,12 +1,12 @@
 # Spec 006 — Analytics Dashboard Becomes the Homepage
 
-Status: Not started.
+Status: Parts A and C built and verified (commit `f7a4c2c`). Part B built and verified, not yet committed. Parts D, E, F not started.
 Depends on: 003 (roadmap data), 004 (roadmap view), 005 (confidence, `ReviewLog`, tags, filters, company `is_preferred`).
 Phase: 2 of the plan. Reads what spec 005 recorded (confidence, `last_solved_date`, `ReviewLog`) and the company layer from spec 005 part F (`Company.is_preferred`). No new schema — everything in this spec is query logic and UI over fields that already exist.
 
 ## Goal
 
-The roadmap page (`app/page.tsx`) becomes a dashboard: what to do next, how things are going overall, what needs revisiting, where the gaps are, and which companies to weight. The roadmap itself moves to its own route and stays exactly what it is today — a full list to browse and filter — while the homepage answers "what should I look at right now" without opening it.
+The roadmap page moves to its own route (`/roadmap`) and stays exactly what it is today — a full list to browse and filter, LeetCode-specific stat tiles and all. A new dashboard at `/` answers "what should I look at right now" without opening the roadmap: what to do next, how things are going overall (in miniature — the roadmap keeps the full breakdown), what needs revisiting, where the gaps are, and which companies to weight.
 
 ## Decisions settled for this spec
 
@@ -47,11 +47,15 @@ Out of scope: any visual change to the roadmap page itself beyond what Part C re
 
 ### Acceptance criteria
 
-- [ ] `/roadmap` renders exactly what `/` used to (stages, groups, filters, sidebar, CompanyWise), with `npx tsc --noEmit` clean after the move.
-- [ ] `/` renders the new dashboard (Part B onward).
-- [ ] All four updated links (filter clear, both `RoadmapFilters.tsx` links, the problem-page back link) point at `/roadmap` and were exercised by following them, not just read.
-- [ ] The header highlights "Dashboard" only on `/`, and "Roadmap" on `/roadmap` and on a problem detail page.
-- [ ] A bookmarked filtered roadmap URL (e.g. `/?status=unsolved&difficulty=Easy`) is not expected to keep working — confirm nothing in the app still generates a filter link at the old path.
+- [x] `/roadmap` renders exactly what `/` used to (stages, groups, filters, sidebar, CompanyWise), with `npx tsc --noEmit` clean after the move.
+- [x] `/` renders the new dashboard. (Only Part C's card exists there so far; B/D/E/F land in later `/implement` passes.)
+- [x] All four updated links (filter clear, both `RoadmapFilters.tsx` links, the problem-page back link) point at `/roadmap`. *(Checked via source read and by requesting the resulting URLs with curl — not clicked in a real browser.)*
+- [x] The header highlights "Dashboard" only on `/`, and "Roadmap" on `/roadmap` and on a problem detail page.
+- [x] A bookmarked filtered roadmap URL (e.g. `/?status=unsolved&difficulty=Easy`) is not expected to keep working — confirmed nothing in the app still generates a filter link at the old path (`grep` for `href="/?` and `href="/"` across `app/` turned up nothing but the header's brand link, which correctly points at the new dashboard).
+
+### Verification
+
+Checked 2026-09-22 against the running app and the live Docker database (read-only — no writes were tested or needed for this step). The dev server was started on port 3001 (3000 was already in use by the user's own instance, left untouched) and stopped by PID afterwards, not by image name. `curl` confirmed `/` and `/roadmap` both return 200, a stale route returns 404, the header's `aria-current="page"` lands on the right tab in both places (including from `/problems/[id]`), and the dashboard's and roadmap's progress numbers are byte-identical (40/154 solved, same per-difficulty split) since both now call `lib/roadmapStats.ts`. Not verified: any real click (only HTTP requests and static `grep`/source reads).
 
 ## Part B — Next up + roadmap preview card
 
@@ -75,29 +79,39 @@ Out of scope: a "skip this problem" action; showing more than 2 problems; cross-
 
 ### Acceptance criteria
 
-- [ ] With no preferred companies, the card shows the first stage (in `order`) with any unsolved placement, its own solved/total bar, and up to 2 unsolved problems from it in `roadmap_order`, matching a direct database query.
-- [ ] With a preferred company asking one of that stage's later-ordered unsolved problems, that problem moves ahead of an earlier-ordered one **within the same stage's list** — and a problem from a different, earlier-ordered stage is never pulled in ahead of it.
-- [ ] A fully-solved roadmap renders the completion state, not an error.
-- [ ] A stage whose only unsolved problems are all in a `StageGroup` shows the group title alongside the stage label.
-- [ ] "View full roadmap →" opens `/roadmap`; each problem link opens the right `/problems/[id]`.
+- [x] With no preferred companies, the card shows the first stage (in `order`) with any unsolved placement, its own solved/total bar, and up to 2 unsolved problems from it in `roadmap_order`, matching a direct database query.
+- [x] With a preferred company asking one of that stage's later-ordered unsolved problems, that problem moves ahead of an earlier-ordered one **within the same stage's list** — and a problem from a different, earlier-ordered stage is never pulled in ahead of it.
+- [x] A fully-solved roadmap renders the completion state, not an error. *(Checked by code inspection — `Array.prototype.find` returning `undefined` and the `!current` guard — not exercised live, since reaching that state would mean writing to the user's real progress, which is off-limits.)*
+- [x] A stage whose only unsolved problems are all in a `StageGroup` shows the group title alongside the stage label.
+- [x] "View full roadmap →" opens `/roadmap`; each problem link opens the right `/problems/[id]`.
+
+### Verification
+
+Checked 2026-09-22, read-only against the live database, dev server on a scratch port (3101, stopped by PID afterwards). Direct-query script (`getRoadmapStats`-style, deleted after use) confirmed: the current stage is Stage 8A ("Matching & Simulation", grouped under "Stack"), 0/5 solved, every stage before it in `order` fully solved, and the next two unsolved by `roadmap_order` are Valid Parentheses (41) and Min Stack (42) — all matching the rendered card exactly. The reordering rule (B3) was verified separately as a pure-logic fixture test against `rankUnsolved` (extracted from `getNextUp` for this purpose): a later-ordered placement tagged with a preferred company moved ahead of an earlier one but not past a still-later one, and an empty preferred set left `roadmap_order` untouched — no live data involved, since no companies are currently starred. Not verified: any real click; the completion state (B5), which was checked by reading the code rather than triggered live.
 
 ## Part C — Progress at a glance
 
 ### Decisions
 
-C1. **The four stat tiles (Solved / Easy / Medium / Hard) move from the roadmap page to the dashboard.** They're overall numbers, not filtered-list chrome, so they read better as the dashboard's "progress at a glance" than sitting above a list that's about to be filtered. The roadmap page keeps its plain header line (stage and problem counts) but drops the tile strip.
-C2. The computation is unchanged from today's `app/page.tsx` (distinct problems across placements, so LC 268 counts once).
+C1. **Changed 2026-09-22, before build (the user's call, overriding this spec's first draft):** the four stat tiles (Solved / Easy / Medium / Hard) **stay on the roadmap page, unchanged** — they're LeetCode-specific, and the roadmap is the LeetCode-specific screen. The dashboard gets a **minimized version** instead, since it has to share space with the other sections in this spec (and, later, other tracks).
+C2. **The two pages share one computation** so they can't drift apart: `lib/roadmapStats.ts` exports `getRoadmapStats()` (distinct problems across placements, so LC 268 counts once) and both `/roadmap` and `/` call it. The roadmap page was refactored to call it too, rather than keeping its own inline copy, specifically so this couldn't silently diverge later.
+C3. **The minimized card is one compact block, not four small tiles**: a hero "N / total solved" figure with an overall %, one progress bar, and a row of small colour-dot stats (Easy/Medium/Hard, each `solved/total`) underneath — reusing the exact dot colours already used everywhere else for difficulty (`DIFFICULTY_META` in `lib/roadmapStats.ts`), so nothing new is introduced there. It links out with "View roadmap →". Titled "DSA Roadmap progress" (not just "Progress") on purpose — CLAUDE.local.md Part 1 says DSA is one track among several, and this card is scoped to DSA specifically so a second track's card can sit beside it later without the two being confused.
 
 ### Scope
 
-In scope: moving `StatTile` and the `DIFFICULTIES`/count computation from the old `app/page.tsx` into the new dashboard; removing the stat-tile section from `app/roadmap/page.tsx`.
+In scope: `lib/roadmapStats.ts` (the shared stats function, moved out of the old `app/page.tsx`); `app/roadmap/page.tsx` keeping its `StatTile` component and four-tile section, now fed by the shared function; the new `app/page.tsx` dashboard's `RoadmapProgressCard`, an async Server Component reading the same function.
 
-Out of scope: tier or stage-strip breakdowns (CLAUDE.local.md lists these as later additions to this same section, not required now); per-set or per-track stats (no `ProblemSet`/`Track` yet).
+Out of scope: tier or stage-strip breakdowns (CLAUDE.local.md lists these as later additions to this same section, not required now); per-set or per-track stats (no `ProblemSet`/`Track` yet); a second track's card (nothing to show yet, but C3's naming leaves room for it).
 
 ### Acceptance criteria
 
-- [ ] The dashboard's four tiles show the same numbers the roadmap page's tiles show today, verified against the database.
-- [ ] The roadmap page no longer renders a stat-tile strip; its header still states the stage and problem counts.
+- [x] The roadmap page's four tiles are unchanged in appearance and behaviour from before this spec.
+- [x] The dashboard's minimized card shows numbers identical to the roadmap page's tiles, sourced from the same function — not just coincidentally equal.
+- [x] The roadmap page's stat-tile section still renders after the refactor to the shared function (i.e. the refactor didn't silently drop it, which is what the first draft of this spec would have done).
+
+### Verification
+
+Checked 2026-09-22 (see Part A's Verification — same session, same server, read-only against the live database). `curl` dumps of both pages' HTML were compared line-by-line for the progress numbers: roadmap tiles read 40/154 solved, Easy 14/35, Medium 22/104, Hard 4/15; the dashboard card reads the identical 40/154, 26%, and the same three difficulty splits. Not verified: the card's appearance (colour, spacing, dark mode) in an actual browser — only the rendered HTML and class names were checked.
 
 ## Part D — Review queue
 
@@ -191,5 +205,5 @@ Out of scope: focus tracks, ranking weights, off-roadmap questions from target c
 
 - The next-up and review-queue reordering rules (B3, D4) are the first real use of `is_preferred` as a *ranking* signal rather than a display filter; if it turns out to matter which of several preferred companies wins when a problem matches more than one, that's unspecified here (any match counts equally).
 - Strengths/weaknesses' "not confidently strong ⇒ weak" rule (E3) is a deliberate simplification or a real design decision, not verified against how it feels once there's more rated data across the roadmap.
-- No UI is specified for confirming the dashboard "reads better" than the roadmap page once stat tiles move (Part C) — this is a judgement call to revisit after the real click-through owed since spec 005.
+- No UI is specified for confirming the minimized card (Part C) reads well once B/D/E/F are sitting next to it and the dashboard actually has competing sections — this is a judgement call to revisit after the real click-through owed since spec 005.
 - The review queue and strengths/weaknesses share the notion of "due" (Part D's `isDue`) but nothing here defines what happens once `ReviewLog`-per-stage history (rather than the problem-level roll-up) becomes relevant for a problem with several placements — deferred until it's actually needed.
