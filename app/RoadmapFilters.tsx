@@ -167,7 +167,7 @@ export function RoadmapFiltersPanel({
 
             {filtering && (
               <div className="border-t pt-3 text-right">
-                <Link href="/" scroll={false} className="text-sm font-medium text-primary underline-offset-2 hover:underline">
+                <Link href="/roadmap" scroll={false} className="text-sm font-medium text-primary underline-offset-2 hover:underline">
                   Clear all filters
                 </Link>
               </div>
@@ -182,7 +182,7 @@ export function RoadmapFiltersPanel({
           {matchCount === 1 ? 'problem' : 'problems'} in{' '}
           <span className="font-medium text-foreground">{stageCount}</span> {stageCount === 1 ? 'stage' : 'stages'}
           <span aria-hidden> · </span>
-          <Link href="/" scroll={false} className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link href="/roadmap" scroll={false} className="font-medium text-primary underline-offset-2 hover:underline">
             Clear
           </Link>
         </p>

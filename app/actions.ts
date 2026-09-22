@@ -8,6 +8,7 @@ import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor }
 
 function revalidateAll() {
   revalidatePath('/');
+  revalidatePath('/roadmap');
   revalidatePath('/problems/[id]', 'page');
 }
 

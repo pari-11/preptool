@@ -59,7 +59,7 @@ export default async function ProblemPage({ params }: { params: { id: string } }
     <TagsProvider tags={tags}>
       <div className="mx-auto flex max-w-3xl flex-col gap-5 px-4 py-8">
         <Link
-          href="/"
+          href="/roadmap"
           className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" /> Roadmap

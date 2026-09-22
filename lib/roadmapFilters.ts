@@ -61,7 +61,7 @@ export function filtersHref(f: RoadmapFilters): string {
   f.tag.forEach((t) => query.append('tag', t));
   f.company.forEach((c) => query.append('company', c));
   const text = query.toString();
-  return text ? `/?${text}` : '/';
+  return text ? `/roadmap?${text}` : '/roadmap';
 }
 
 export function toggleIn<T>(list: T[], value: T): T[] {

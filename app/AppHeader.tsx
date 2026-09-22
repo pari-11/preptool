@@ -2,12 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Route } from 'lucide-react';
+import { LayoutDashboard, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [
-  { href: '/', label: 'Roadmap', icon: Route, isActive: (p: string) => p === '/' || p.startsWith('/problems') },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, isActive: (p: string) => p === '/' },
+  {
+    href: '/roadmap',
+    label: 'Roadmap',
+    icon: Route,
+    isActive: (p: string) => p.startsWith('/roadmap') || p.startsWith('/problems'),
+  },
 ];
 
 export function AppHeader() {
