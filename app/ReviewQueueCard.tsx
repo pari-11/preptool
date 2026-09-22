@@ -4,12 +4,6 @@ import { cn } from '@/lib/utils';
 
 const DIFFICULTY_DOT = { Easy: 'bg-emerald-500', Medium: 'bg-amber-500', Hard: 'bg-rose-500' } as const;
 
-function overdueLabel(daysOverdue: number): string {
-  if (daysOverdue === Infinity) return 'date unknown';
-  if (daysOverdue <= 0) return 'due today';
-  return `${daysOverdue}d overdue`;
-}
-
 // Solved problems worth revisiting, most overdue first (spec 006 part D). Ordering and eligibility
 // live in lib/reviewQueue.ts; this only renders the top slice and the total due count.
 export async function ReviewQueueCard() {
@@ -33,9 +27,6 @@ export async function ReviewQueueCard() {
                   <span className={cn('size-1.5 shrink-0 rounded-full', DIFFICULTY_DOT[item.difficulty])} />
                 )}
                 <span className="min-w-0 flex-1 truncate font-medium">{item.title}</span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {overdueLabel(item.daysOverdue)}
-                </span>
               </Link>
             </li>
           ))}

@@ -12,7 +12,6 @@ import { RevisitButton } from '@/app/RevisitButton';
 import { ProblemTags } from '@/app/ProblemTags';
 import { TagsProvider } from '@/app/TagsProvider';
 import { NoteEditor } from './NoteEditor';
-import { ResolveForm } from './ResolveForm';
 
 const DIFFICULTY_STYLES = {
   Easy: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400',
@@ -162,13 +161,6 @@ export default async function ProblemPage({ params }: { params: { id: string } }
                   ? 'date unknown'
                   : '—'}
             </div>
-
-            {problem.is_solved && (
-              <ResolveForm
-                problemId={problem.id}
-                stages={problem.stages.map((s) => ({ id: s.stage_id, label: s.stage.stage_label }))}
-              />
-            )}
 
             <div className="border-t pt-3">
               <RevisitButton problemId={problem.id} count={reviewCounts.Revisited} />
