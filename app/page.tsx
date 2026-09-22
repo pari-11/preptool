@@ -4,6 +4,7 @@ import { getRoadmapStats } from '@/lib/roadmapStats';
 import { ProgressBar } from '@/components/ProgressBar';
 import { cn } from '@/lib/utils';
 import { NextUpCard } from './NextUpCard';
+import { ReviewQueueCard } from './ReviewQueueCard';
 
 // Progress at a glance, minimized: the same numbers the roadmap page's four tiles show (see
 // lib/roadmapStats.ts), condensed into one card since the dashboard has other sections to fit.
@@ -61,6 +62,10 @@ export default function Home() {
 
       <section aria-label="Progress at a glance" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <RoadmapProgressCard />
+      </section>
+
+      <section aria-label="Review queue" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ReviewQueueCard />
       </section>
     </div>
   );
