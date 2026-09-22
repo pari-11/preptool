@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SolvedCheckbox } from '@/app/SolvedCheckbox';
 import { ConfidencePicker } from '@/app/ConfidencePicker';
+import { LogReview } from '@/app/LogReview';
 import { ProblemTags } from '@/app/ProblemTags';
 import { TagsProvider } from '@/app/TagsProvider';
 import { NoteEditor } from './NoteEditor';
@@ -23,6 +24,12 @@ const TIER_STYLES = {
   Core: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-400',
   Supp: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
   Stretch: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900 dark:bg-purple-950 dark:text-purple-400',
+} as const;
+
+const EVENT_TYPE_STYLES = {
+  Solved: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400',
+  Revised: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-400',
+  Revisited: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
 } as const;
 
 const formatDateTime = (d: Date) =>
@@ -45,6 +52,8 @@ export default async function ProblemPage({ params }: { params: { id: string } }
     }),
   ]);
   if (!problem) notFound();
+  const reviewCounts = { Solved: 0, Revised: 0, Revisited: 0 };
+  for (const review of problem.reviews) reviewCounts[review.event_type]++;
   const tags = tagRows.map((t) => ({
     id: t.id,
     name: t.name,
@@ -160,6 +169,11 @@ export default async function ProblemPage({ params }: { params: { id: string } }
                 stages={problem.stages.map((s) => ({ id: s.stage_id, label: s.stage.stage_label }))}
               />
             )}
+
+            <div className="flex items-center gap-2 border-t pt-3 text-sm text-muted-foreground">
+              Just looked, or read it over without re-solving?
+              <LogReview problemId={problem.id} stageId={null} />
+            </div>
           </CardContent>
         </Card>
 
@@ -207,7 +221,15 @@ export default async function ProblemPage({ params }: { params: { id: string } }
 
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base">History</CardTitle>
+            <CardTitle className="text-base">
+              History{' '}
+              {problem.reviews.length > 0 && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  — {problem.reviews.length} {problem.reviews.length === 1 ? 'review' : 'reviews'}: {reviewCounts.Solved}{' '}
+                  solved · {reviewCounts.Revised} revised · {reviewCounts.Revisited} revisited
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {problem.reviews.length === 0 ? (
@@ -219,6 +241,9 @@ export default async function ProblemPage({ params }: { params: { id: string } }
                     key={review.id}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 first:border-t-0 first:pt-0"
                   >
+                    <Badge variant="outline" className={cn('text-[11px]', EVENT_TYPE_STYLES[review.event_type])}>
+                      {review.event_type}
+                    </Badge>
                     <span>{review.solved_at ? formatDateTime(review.solved_at) : 'Date unknown'}</span>
                     {review.stage && (
                       <span className="text-muted-foreground">{review.stage.stage_label}</span>

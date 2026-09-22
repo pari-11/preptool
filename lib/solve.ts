@@ -48,7 +48,7 @@ export async function recordSolve(
   }
 
   await tx.reviewLog.create({
-    data: { problem_id: problemId, stage_id: logStageId, solved_at: solvedAt },
+    data: { problem_id: problemId, stage_id: logStageId, event_type: 'Solved', solved_at: solvedAt },
   });
 
   if (placements.length === 0) {
@@ -57,10 +57,33 @@ export async function recordSolve(
     await recomputeRollup(tx, problemId);
   }
 
+  // A solve is always review-worthy, so it resets the review queue's staleness clock too.
   await tx.problem.update({
     where: { id: problemId },
-    data: solvedAt ? { last_solved_date: solvedAt, confidence: null } : { confidence: null },
+    data: solvedAt
+      ? { last_solved_date: solvedAt, last_reviewed_date: solvedAt, confidence: null }
+      : { confidence: null },
   });
+}
+
+// Records a lighter review event that doesn't drive any placement's checkbox: 'Revised' (re-read
+// the solution or notes without a fresh solve) or 'Revisited' (just looked at it again). Unlike a
+// solve, there's no placement to disambiguate — stageId is recorded on the log row for context
+// when the caller has it, but is never required. Only 'Revised' resets the review queue's
+// staleness clock; a bare glance shouldn't let a problem hide from the queue.
+export async function recordReview(
+  tx: Tx,
+  problemId: string,
+  stageId: string | null,
+  kind: 'Revised' | 'Revisited'
+) {
+  const now = new Date();
+  await tx.reviewLog.create({
+    data: { problem_id: problemId, stage_id: stageId, event_type: kind, solved_at: now },
+  });
+  if (kind === 'Revised') {
+    await tx.problem.update({ where: { id: problemId }, data: { last_reviewed_date: now } });
+  }
 }
 
 // Unticking only flips the solved flag. History, rating, dates and the note are kept.

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { isValidConfidence } from '@/lib/confidence';
-import { clearSolved, recordSolve } from '@/lib/solve';
+import { clearSolved, recordReview, recordSolve } from '@/lib/solve';
 import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor } from '@/lib/tags';
 
 function revalidateAll() {
@@ -29,6 +29,13 @@ export async function toggleSolved(problemId: string, stageId: string | null, ne
 // stages the stage is required; it is marked solved there if it wasn't already.
 export async function logSolve(problemId: string, stageId: string | null) {
   await prisma.$transaction((tx) => recordSolve(tx, problemId, stageId, new Date()));
+  revalidateAll();
+}
+
+// Logs a Revise (re-read the solution/notes, no fresh solve) or a Revisit (just looked again) —
+// see lib/solve.ts for why only Revise resets the review queue's staleness clock.
+export async function logReview(problemId: string, stageId: string | null, kind: 'Revised' | 'Revisited') {
+  await prisma.$transaction((tx) => recordReview(tx, problemId, stageId, kind));
   revalidateAll();
 }
 

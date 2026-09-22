@@ -69,6 +69,11 @@ model Problem {
   last_solved_date DateTime?
   user_note        String?
 
+  // Last time any review-worthy event happened (Solved or Revised — not a bare Revisited glance).
+  // The review queue's staleness clock reads this, not last_solved_date: a Revise (re-reading the
+  // solution/notes without a fresh solve) is meaningful engagement and should reset it too.
+  last_reviewed_date DateTime?
+
   stages    ProblemStage[]
   companies ProblemCompany[]
   reviews   ReviewLog[]
@@ -100,15 +105,24 @@ model ProblemTag {
   @@index([tag_id])
 }
 
-// One row per solve event; unticking never deletes rows. stage_id is recorded only when the
-// problem sits in more than one stage; solved_at null means "solved, date unknown".
+enum ReviewEventType {
+  Solved
+  Revised // reviewed/studied again (e.g. re-read the solution or notes) without a fresh solve
+  Revisited // just looked at it again, no real engagement
+}
+
+// One row per review event (a solve, a revise, or a bare revisit) — not just solves any more.
+// Unticking never deletes rows. stage_id is recorded only when the problem sits in more than one
+// stage (and only ever for a Solved row, since Revise/Revisit don't drive any placement's checkbox);
+// solved_at null on a Solved row means "solved, date unknown".
 model ReviewLog {
-  id                 String    @id @default(cuid())
+  id                 String          @id @default(cuid())
   problem_id         String
   stage_id           String?
+  event_type         ReviewEventType @default(Solved)
   solved_at          DateTime?
   confidence_at_time Int?
-  created_at         DateTime  @default(now())
+  created_at         DateTime        @default(now())
 
   problem Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
   stage   Stage?  @relation(fields: [stage_id], references: [id], onDelete: SetNull)

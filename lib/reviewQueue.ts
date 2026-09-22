@@ -16,7 +16,9 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 type ReviewableProblem = {
   confidence: number | null;
-  last_solved_date: Date | null;
+  // Last Solved or Revised event — not a bare Revisited glance (see lib/solve.ts). This is what
+  // the staleness clock reads, deliberately not last_solved_date.
+  last_reviewed_date: Date | null;
 };
 
 function intervalDays(confidence: number | null): number {
@@ -24,11 +26,11 @@ function intervalDays(confidence: number | null): number {
   return REVIEW_INTERVAL_DAYS[confidence] ?? UNRATED_INTERVAL_DAYS;
 }
 
-// null = "solved, date unknown" (only the removed bulk importer ever produced this). Staleness
-// can't be computed then, so there's no due date to give — the caller treats that as always due.
+// null = never reviewed with a date (only the removed bulk importer ever produced an undated
+// solve). Staleness can't be computed then, so there's no due date to give — always due.
 export function dueDate(problem: ReviewableProblem): Date | null {
-  if (!problem.last_solved_date) return null;
-  const due = new Date(problem.last_solved_date);
+  if (!problem.last_reviewed_date) return null;
+  const due = new Date(problem.last_reviewed_date);
   due.setDate(due.getDate() + intervalDays(problem.confidence));
   return due;
 }
@@ -69,7 +71,7 @@ export function rankQueue<T extends RankableProblem>(
       const aConfidence = a.confidence ?? 0;
       const bConfidence = b.confidence ?? 0;
       if (aConfidence !== bConfidence) return aConfidence - bConfidence;
-      return (a.last_solved_date?.getTime() ?? 0) - (b.last_solved_date?.getTime() ?? 0);
+      return (a.last_reviewed_date?.getTime() ?? 0) - (b.last_reviewed_date?.getTime() ?? 0);
     });
 }
 
@@ -97,7 +99,7 @@ export async function getReviewQueue(limit: number): Promise<ReviewQueue> {
         title: true,
         difficulty: true,
         confidence: true,
-        last_solved_date: true,
+        last_reviewed_date: true,
         companies: { select: { company_id: true } },
       },
     }),
