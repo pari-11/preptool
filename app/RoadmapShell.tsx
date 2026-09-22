@@ -29,10 +29,10 @@ export function RoadmapShell({
       <aside
         className={cn(
           'sticky top-[4.5rem] hidden h-[calc(100vh-5.5rem)] shrink-0 flex-col transition-[width] duration-200 lg:flex',
-          collapsed ? 'w-10' : 'w-60'
+          collapsed ? 'w-10 items-center' : 'w-60'
         )}
       >
-        <div className={cn('flex items-center pb-2', collapsed ? 'justify-center' : 'justify-between pl-2.5')}>
+        <div className={cn('flex w-full items-center pb-2', collapsed ? 'justify-center' : 'justify-between pl-2.5')}>
           {!collapsed && (
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Stages</span>
           )}
@@ -48,11 +48,11 @@ export function RoadmapShell({
           </button>
         </div>
         {collapsed ? (
-          <span className="mx-auto mt-2 select-none text-[11px] font-semibold uppercase tracking-wider text-muted-foreground [writing-mode:vertical-rl]">
+          <span className="mt-1 select-none text-[11px] font-semibold uppercase tracking-wider text-muted-foreground [writing-mode:vertical-rl]">
             Stages
           </span>
         ) : (
-          <div className="min-h-0 flex-1">{nav}</div>
+          <div className="min-h-0 w-full flex-1">{nav}</div>
         )}
       </aside>
 
