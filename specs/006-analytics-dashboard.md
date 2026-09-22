@@ -49,7 +49,7 @@ Out of scope: any visual change to the roadmap page itself beyond what Part C re
 
 - [x] `/roadmap` renders exactly what `/` used to (stages, groups, filters, sidebar, CompanyWise), with `npx tsc --noEmit` clean after the move.
 - [x] `/` renders the new dashboard. (Only Part C's card exists there so far; B/D/E/F land in later `/implement` passes.)
-- [x] All four updated links (filter clear, both `RoadmapFilters.tsx` links, the problem-page back link) point at `/roadmap`. *(Checked via source read and by requesting the resulting URLs with curl — not clicked in a real browser.)*
+- [x] All four updated links (filter clear, both `RoadmapFilters.tsx` links, the problem-page back link) point at `/roadmap`. *(Checked via source read and curl on 2026-09-22, then confirmed by the user clicking through the real app the same day.)*
 - [x] The header highlights "Dashboard" only on `/`, and "Roadmap" on `/roadmap` and on a problem detail page.
 - [x] A bookmarked filtered roadmap URL (e.g. `/?status=unsolved&difficulty=Easy`) is not expected to keep working — confirmed nothing in the app still generates a filter link at the old path (`grep` for `href="/?` and `href="/"` across `app/` turned up nothing but the header's brand link, which correctly points at the new dashboard).
 

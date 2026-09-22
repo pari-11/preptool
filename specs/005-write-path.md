@@ -1,6 +1,6 @@
 # Spec 005 — Write Path, Stage Groups, Tags, Filters, Roadmap UI and Companies
 
-Status: Built (commits `264268b`, `8f9dc88`, `ca45c41`, `f80a2dd`, and part F in the commit carrying this spec update) and checked against the running app, with the gaps listed under each Verification. Nothing was clicked in a real browser: interactions were checked through the server actions, rendered HTML and screenshots.
+Status: Built (commits `264268b`, `8f9dc88`, `ca45c41`, `f80a2dd`, and part F in the commit carrying this spec update) and checked against the running app. Originally verified only through server actions, rendered HTML and screenshots; the user did a real-browser click-through on 2026-09-22 and confirmed everything below works — see each part's Verification for what that covers.
 Depends on: 001 (data model), 003 (roadmap data), 004 (roadmap view, per-placement solved state)
 Phase: 1 of the plan (write path). Phase 2 (dashboard, review queue, strengths/weaknesses) reads what this spec starts recording.
 
@@ -72,7 +72,7 @@ Also gives each problem its own page (rate, note, history). A bulk "mark these I
 
 - [ ] Migration applies cleanly on the existing database with all existing data intact; the import scripts still run and do not touch the new fields or solved state. *(Partly verified — see Verification.)*
 - [x] Ticking a placement creates one `ReviewLog` row, sets `last_solved_date`, and leaves the problem not rated unless a rating is clicked.
-- [ ] Every solved row shows the 1–5 control with the current rating highlighted; clicking a value sets `Problem.confidence` and the latest log row's `confidence_at_time`; clicking the current value clears it. *(Server side and the rendered highlight verified; the click itself was not exercised in a browser.)*
+- [x] Every solved row shows the 1–5 control with the current rating highlighted; clicking a value sets `Problem.confidence` and the latest log row's `confidence_at_time`; clicking the current value clears it. *(Server side and the rendered highlight verified 2026-09-20; the click itself confirmed by the user in a real browser 2026-09-22.)*
 - [x] Values outside 1–5 (and rating an unsolved problem) are rejected by `setConfidence`.
 - [x] Unticking a placement keeps all `ReviewLog` rows, `last_solved_date`, and the note; the roll-up `Problem.is_solved` is correct afterwards.
 - [x] Re-ticking after an untick adds a new log row and clears the current rating (the old rating is still on its earlier row).
@@ -100,8 +100,10 @@ Checked 2026-09-20 against the running app (`npm run dev`) and the Docker Postgr
 - One defect found and fixed during testing: an undated (bulk) solve left a stale rating behind; any new solve now clears it (decision 6).
 - *Superseded:* that round also checked an "Unrated" chip on solved rows. The chip was removed later (decision 1); the current behaviour is checked via screenshots (a highlighted rating where rated, nothing highlighted otherwise) and the rendered pages.
 
+**Verified 2026-09-22 (real browser, by the user):** the rating buttons and the note box.
+
 **Not verified**
-- Nothing was clicked in a real browser: the rating buttons, the note box and the stage dropdown.
+- The stage dropdown (re-solve's stage picker) — not called out specifically when the user confirmed the rest, so left open.
 - Import scripts: `import-roadmap.ts` was run (after the grouping change) and left the stage and problem tables unchanged, but nothing was solved or rated at that moment, so this does not prove solved state survives a re-import. That rests on reading the script: its create/update payloads list only imported fields. `import-companies.ts` and `backfill-roadmap-difficulty.ts` were not run.
 
 ## Part B — Stage grouping
@@ -133,11 +135,11 @@ Out of scope: broader groupings; group detail pages; collapsing groups; editing 
 - [x] A group's count is the sum of its stages' counts and updates when a problem is ticked (Two Pointers 1/12, 4A 1/7, 4B 0/5 after ticking one 4A problem, matching the database).
 - [x] The sidebar lists each group with its sub-stages nested beneath it (rendered HTML and screenshots).
 - [x] Bridge B is still the only violet-tinted card.
-- [ ] In a real browser: the sidebar links jump to the right group and sub-stage.
+- [x] In a real browser: the sidebar links jump to the right group and sub-stage. *(Confirmed by the user 2026-09-22.)*
 
 ### Verification
 
-Checked 2026-09-20 on the running app and database, by reading rendered HTML, screenshots and database queries. The re-run and from-scratch import ran through a temporary `npx tsx` (not added to the project), after a `pg_dump` backup.
+Checked 2026-09-20 on the running app and database, by reading rendered HTML, screenshots and database queries. The re-run and from-scratch import ran through a temporary `npx tsx` (not added to the project), after a `pg_dump` backup. The sidebar-navigation criterion above was confirmed separately by the user clicking through the real app on 2026-09-22.
 
 ## Part C — Tags
 
@@ -174,13 +176,11 @@ Out of scope: tag search; tags on stages or companies; using tags as `ItemLink` 
 - [x] A roadmap row shows three chips and "+1" for a four-tag problem; the tag icon carries no hover-only styling.
 - [x] The Manage tags dialog lists every tag with its colour and usage count, shows the delete confirmation inline, and renders in light and dark (screenshots with the dialog forced open).
 - [x] A saved link containing a deleted tag id falls back to the unfiltered roadmap.
-- [ ] In a real browser: opening the dialog from the filter popover and from a row (and the popover closing behind it), adding a tag with a chosen colour, editing a tag's name and colour (Save, Cancel, a duplicate-name error), deleting with confirm and cancel, toggling a tag on a row, the problem-page Tags card.
+- [x] In a real browser: opening the dialog from the filter popover and from a row (and the popover closing behind it), adding a tag with a chosen colour, editing a tag's name and colour (Save, Cancel, a duplicate-name error), deleting with confirm and cancel, toggling a tag on a row, the problem-page Tags card. *(Confirmed by the user 2026-09-22, against the live app this time — not the scratch copy.)*
 
 ### Verification
 
-Checked 2026-09-20. **Writes were tested only against a scratch copy** (a `pg_dump` of the live database loaded into a scratch database, with a copy of the app on port 3100 pointed at it; both removed afterwards). Isolation was confirmed with one write that changed the scratch database and not the live one. The live database was only read; its tag and log counts were unchanged (41 log rows, 5 tags, no ratings). Interactive states were captured by forcing popovers/dialog open in the scratch copy only.
-
-**Not verified:** every click in the criterion above; the problem-page Tags card beyond the page returning 200.
+Checked 2026-09-20. **Writes were tested only against a scratch copy** (a `pg_dump` of the live database loaded into a scratch database, with a copy of the app on port 3100 pointed at it; both removed afterwards). Isolation was confirmed with one write that changed the scratch database and not the live one. The live database was only read; its tag and log counts were unchanged (41 log rows, 5 tags, no ratings). Interactive states were captured by forcing popovers/dialog open in the scratch copy only. Every click listed in the criterion above was later confirmed working by the user, in a real browser against the live app, on 2026-09-22.
 
 ## Part D — Filters
 
@@ -210,11 +210,11 @@ Out of scope: saved filters; text search; sorting.
 - [x] The summary line and the "No problems match these filters" state render.
 - [x] The popover renders in light and dark with the active options highlighted (screenshots with it forced open).
 - [ ] Stage counters keep whole-stage totals under a filter. *(Implemented; not explicitly checked.)*
-- [ ] In a real browser: the popover opens, stays open between picks, closes on Escape/outside click, and "Clear" works.
+- [x] In a real browser: the popover opens, stays open between picks, closes on Escape/outside click, and "Clear" works. *(Confirmed by the user 2026-09-22.)*
 
 ### Verification
 
-Row counts were compared with `psql` queries on the live database (read-only) and on the scratch copy (with seeded ratings and tags). Screenshots via headless Chrome with an isolated profile.
+Row counts were compared with `psql` queries on the live database (read-only) and on the scratch copy (with seeded ratings and tags). Screenshots via headless Chrome with an isolated profile. The popover's interactive behaviour above was confirmed separately by the user in a real browser on 2026-09-22.
 
 ## Part E — Roadmap UI
 
@@ -244,11 +244,11 @@ Out of scope: a dashboard (Phase 2); a mobile navigation for the stage list; use
 - [x] With the `roadmap-nav=collapsed` cookie the server renders the collapsed rail (narrow sidebar, "Expand" toggle, no stage list); without it, the full sidebar with a "Collapse" toggle.
 - [x] The theme follows the system setting when nothing is saved (a dark system rendered dark on first load).
 - [x] Difficulty and tier columns sit further right and the title cell has room for three tag chips.
-- [ ] In a real browser: the sidebar toggle folds and unfolds and the choice survives a reload; the theme toggle flips and the choice survives a reload; the highlighted stage follows scrolling; sidebar links jump to the right stage.
+- [x] In a real browser: the sidebar toggle folds and unfolds and the choice survives a reload; the theme toggle flips and the choice survives a reload; the highlighted stage follows scrolling; sidebar links jump to the right stage. *(Confirmed by the user 2026-09-22.)*
 
 ### Verification
 
-Screenshots (headless Chrome and Edge, light and dark, desktop and a 390px iframe) of the live app and the scratch copy, plus rendered-HTML checks with and without the sidebar cookie. **Not verified:** all clicks and scrolling (see the unticked criterion).
+Screenshots (headless Chrome and Edge, light and dark, desktop and a 390px iframe) of the live app and the scratch copy, plus rendered-HTML checks with and without the sidebar cookie. All clicking and scrolling above was confirmed working by the user in a real browser on 2026-09-22.
 
 ## Part F — Companies on the roadmap
 
@@ -283,9 +283,9 @@ Out of scope: the company detail view and off-roadmap gap analysis (Phase 4); us
 - [x] Logo files are served with the right content type: `.svg` → `image/svg+xml`, `.png` → `image/png`, `.ico` → `image/x-icon`, all 200.
 - [x] An unknown company slug in the URL is ignored and the full roadmap is shown.
 - [x] `npx tsc --noEmit` is clean; `lib/companies.ts` stays free of Node imports so the client bundle does not pull in `fs`.
-- [ ] `setCompanyPreferred` is exercised through the action rather than SQL. *(Not done — see Verification.)*
-- [ ] In a real browser: the CompanyWise popover opens, the search box filters the list, the star toggles and persists, and the `>` expands.
-- [ ] The logo images are visually correct (right brand, legible at 14px). *(Fetched and served, never looked at.)*
+- [x] `setCompanyPreferred` is exercised through the action rather than SQL. *(Confirmed by the user 2026-09-22 — the star button in the CompanyWise popover calls this action directly, so clicking it in the real app is exercising it.)*
+- [x] In a real browser: the CompanyWise popover opens, the search box filters the list, the star toggles and persists, and the `>` expands. *(Confirmed by the user 2026-09-22.)*
+- [x] The logo images are visually correct (right brand, legible at 14px). *(Confirmed by the user 2026-09-22, "at a glance" rather than a brand-by-brand audit.)*
 
 ### Verification
 
@@ -293,10 +293,9 @@ Checked 2026-09-20 on the running app and the live Docker database, after a `pg_
 
 Counts came from `psql` and from counting distinct `/problems/<id>` links in the rendered HTML. To see the chips at all, Adobe, Google, Microsoft and Amazon were starred **with a direct SQL update**, the rendered page was checked, and every company was then set back to `is_preferred = false` — the state this part was found in, and the state it is being committed in.
 
+**Verified 2026-09-22 (real browser, by the user):** `setCompanyPreferred` through the actual star button (not SQL); the CompanyWise popover's search, star-persistence and disclosure; the logo images at a glance (24 from Simple Icons, 20 from favicon endpoints — not audited brand-by-brand, but nothing looked wrong).
+
 **Not verified**
-- `setCompanyPreferred` itself. The star was set in SQL, so the action's own path (and `revalidatePath` refreshing the chips) has not run once. It is four lines and mirrors `deleteTag`, but it is untested.
-- Every click listed in the unticked criterion above, consistent with the rest of this spec.
-- The logo images themselves were never viewed. 24 came from Simple Icons (CC0, recoloured to each brand's hex), 20 from public favicon endpoints (DuckDuckGo, Google as fallback); files with identical byte lengths were hash-checked to rule out a shared placeholder icon, but nothing confirms each image is the brand it claims. BlackRock, Citadel and Millenium have no file and fall back to initials.
 - Whether `imc.ico` (306 KB) is worth keeping at chip size; it only loads if IMC is starred.
 
 ## Open items
@@ -311,5 +310,5 @@ Counts came from `psql` and from counting distinct `/problems/<id>` links in the
 - **Dark mode** follows the system on a first visit; an explicit choice is stored per browser (localStorage), not per user.
 - **Sidebar** is hidden below `lg`; there is no mobile stage navigation.
 - **Companies:** nothing is starred, so the chips are invisible until the user stars something — the feature looks absent on first load. `ProblemCompany.frequency` is now correct but unused; ordering the chips by it is the obvious next use. Three companies have no logo, and the 20 favicon-sourced files are lower quality than the 24 vector ones. The per-company **source window** (some of `prisma/data/raw/` is the 6+ month bucket by deliberate choice) is still recorded nowhere, which will matter for Phase 4 gap analysis.
-- **Row alignment:** `PlacementRow` still centres its columns vertically, so on a row with company chips the checkbox and badges sit against a two-line block. Not looked at in a browser.
-- **Browser check:** every interactive behaviour above still needs one real click-through.
+- **Row alignment:** `PlacementRow` still centres its columns vertically, so on a row with company chips the checkbox and badges sit against a two-line block. Not called out specifically in the 2026-09-22 click-through, so left open.
+- **Browser check:** done 2026-09-22 — the user clicked through tags, filters, roadmap UI (sidebar, dark mode), CompanyWise and the confidence/note controls in the live app and confirmed all of it works. Each part's acceptance criteria and Verification above reflect this. Not covered: the re-solve stage dropdown and `PlacementRow`'s vertical alignment with company chips (both above).
