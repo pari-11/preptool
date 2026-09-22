@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { getReviewQueue } from '@/lib/reviewQueue';
 import { cn } from '@/lib/utils';
-import { LogReview } from './LogReview';
 
 const DIFFICULTY_DOT = { Easy: 'bg-emerald-500', Medium: 'bg-amber-500', Hard: 'bg-rose-500' } as const;
 
@@ -28,8 +27,8 @@ export async function ReviewQueueCard() {
       ) : (
         <ul className="mt-3 flex flex-col gap-2.5">
           {queue.items.map((item) => (
-            <li key={item.id} className="rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
-              <Link href={`/problems/${item.id}`} className="flex items-center gap-2 text-sm">
+            <li key={item.id} className="rounded-md transition-colors hover:bg-muted">
+              <Link href={`/problems/${item.id}`} className="flex items-center gap-2 px-2 py-1.5 text-sm">
                 {item.difficulty && (
                   <span className={cn('size-1.5 shrink-0 rounded-full', DIFFICULTY_DOT[item.difficulty])} />
                 )}
@@ -38,9 +37,6 @@ export async function ReviewQueueCard() {
                   {overdueLabel(item.daysOverdue)}
                 </span>
               </Link>
-              <div className="mt-1.5">
-                <LogReview problemId={item.id} stageId={item.stageId} />
-              </div>
             </li>
           ))}
         </ul>

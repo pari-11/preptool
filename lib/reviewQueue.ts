@@ -80,9 +80,6 @@ export type QueueItem = {
   title: string;
   difficulty: Difficulty | null;
   daysOverdue: number;
-  // The first placement's stage, if any — a best-effort target for the "Resolved" quick-log
-  // checkbox on a problem with several stages (LogReview has no stage picker of its own).
-  stageId: string | null;
 };
 
 export type ReviewQueue = {
@@ -104,7 +101,6 @@ export async function getReviewQueue(limit: number): Promise<ReviewQueue> {
         confidence: true,
         last_reviewed_date: true,
         companies: { select: { company_id: true } },
-        stages: { select: { stage_id: true }, orderBy: { stage: { order: 'asc' } }, take: 1 },
       },
     }),
   ]);
@@ -120,7 +116,6 @@ export async function getReviewQueue(limit: number): Promise<ReviewQueue> {
       title: p.title,
       difficulty: p.difficulty,
       daysOverdue: p.daysOverdue,
-      stageId: p.stages[0]?.stage_id ?? null,
     })),
   };
 }

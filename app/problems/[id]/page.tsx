@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SolvedCheckbox } from '@/app/SolvedCheckbox';
 import { ConfidencePicker } from '@/app/ConfidencePicker';
-import { LogReview } from '@/app/LogReview';
+import { RevisitButton } from '@/app/RevisitButton';
 import { ProblemTags } from '@/app/ProblemTags';
 import { TagsProvider } from '@/app/TagsProvider';
 import { NoteEditor } from './NoteEditor';
@@ -54,10 +54,6 @@ export default async function ProblemPage({ params }: { params: { id: string } }
   if (!problem) notFound();
   const reviewCounts = { Solved: 0, Revised: 0, Revisited: 0 };
   for (const review of problem.reviews) reviewCounts[review.event_type]++;
-  // Best-effort target for the "Resolved" quick-log checkbox on a problem with several stages —
-  // the per-placement checkboxes and Re-solve's own stage picker above remain the precise way to
-  // solve/re-solve a specific stage.
-  const primaryStageId = problem.stages[0]?.stage_id ?? null;
   const tags = tagRows.map((t) => ({
     id: t.id,
     name: t.name,
@@ -174,9 +170,8 @@ export default async function ProblemPage({ params }: { params: { id: string } }
               />
             )}
 
-            <div className="flex flex-col gap-1.5 border-t pt-3">
-              <span className="text-sm text-muted-foreground">Log a review</span>
-              <LogReview problemId={problem.id} stageId={primaryStageId} />
+            <div className="border-t pt-3">
+              <RevisitButton problemId={problem.id} count={reviewCounts.Revisited} />
             </div>
           </CardContent>
         </Card>
