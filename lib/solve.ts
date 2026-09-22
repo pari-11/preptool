@@ -69,8 +69,9 @@ export async function recordSolve(
 // Records a lighter review event that doesn't drive any placement's checkbox: 'Revised' (re-read
 // the solution or notes without a fresh solve) or 'Revisited' (just looked at it again). Unlike a
 // solve, there's no placement to disambiguate — stageId is recorded on the log row for context
-// when the caller has it, but is never required. Only 'Revised' resets the review queue's
-// staleness clock; a bare glance shouldn't let a problem hide from the queue.
+// when the caller has it, but is never required. Solved, Revised and Revisited all reset the
+// review queue's staleness clock the same way — engaging with a problem at all, however lightly,
+// is what the "when did I last touch this" clock is meant to track.
 export async function recordReview(
   tx: Tx,
   problemId: string,
@@ -81,9 +82,7 @@ export async function recordReview(
   await tx.reviewLog.create({
     data: { problem_id: problemId, stage_id: stageId, event_type: kind, solved_at: now },
   });
-  if (kind === 'Revised') {
-    await tx.problem.update({ where: { id: problemId }, data: { last_reviewed_date: now } });
-  }
+  await tx.problem.update({ where: { id: problemId }, data: { last_reviewed_date: now } });
 }
 
 // Removes the most recent 'Revisited' log row, if any — for the undo button next to the

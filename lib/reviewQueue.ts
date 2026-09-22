@@ -16,8 +16,8 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 type ReviewableProblem = {
   confidence: number | null;
-  // Last Solved or Revised event — not a bare Revisited glance (see lib/solve.ts). This is what
-  // the staleness clock reads, deliberately not last_solved_date.
+  // Last Solved, Revised or Revisited event (see lib/solve.ts) — this is what the staleness
+  // clock reads, deliberately not last_solved_date.
   last_reviewed_date: Date | null;
 };
 
