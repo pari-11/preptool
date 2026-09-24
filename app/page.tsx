@@ -7,6 +7,7 @@ import { NextUpCard } from './NextUpCard';
 import { ReviewQueueCard } from './ReviewQueueCard';
 import { TargetCompaniesCard } from './TargetCompaniesCard';
 import { ActivityCalendarCard } from './ActivityCalendarCard';
+import { StrengthsWeaknessesCard } from './StrengthsWeaknessesCard';
 
 // Progress at a glance, minimized: the same numbers the roadmap page's four tiles show (see
 // lib/roadmapStats.ts), condensed into one card since the dashboard has other sections to fit.
@@ -74,7 +75,10 @@ export default function Home({ searchParams }: { searchParams: { month?: string 
             <RoadmapProgressCard />
             <TargetCompaniesCard />
           </div>
-          <ActivityCalendarCard month={searchParams.month} />
+          <div className="flex flex-col gap-3">
+            <ActivityCalendarCard month={searchParams.month} />
+            <StrengthsWeaknessesCard />
+          </div>
         </div>
       </div>
     </div>

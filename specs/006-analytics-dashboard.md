@@ -1,6 +1,6 @@
 # Spec 006 — Analytics Dashboard Becomes the Homepage
 
-Status: Parts A, B, C built and verified. Part D built, then redesigned twice past what its own text below describes (see the note at the top of Part D) — **needs a closer look before it's called done.** Part F built and verified on an isolated rig, with its UI on a new `/profile` page rather than the dashboard (see Part F); not yet clicked through in a real browser. Part E not started.
+Status: Parts A, B, C built and verified. Part D built, then redesigned twice past what its own text below describes (see the note at the top of Part D) — **needs a closer look before it's called done.** Part F built and verified on an isolated rig, with its UI on a new `/profile` page rather than the dashboard (see Part F); not yet clicked through in a real browser. Part E built and verified with fixtures and on an isolated rig using synthetic ratings; on the user's real data it currently shows every group with 3+ solves as weak because nothing is rated yet (see Part E's verification).
 Depends on: 003 (roadmap data), 004 (roadmap view), 005 (confidence, `ReviewLog`, tags, filters, company `is_preferred`).
 Phase: 2 of the plan. Reads what spec 005 recorded (confidence, `last_solved_date`, `ReviewLog`) and the company layer from spec 005 part F (`Company.is_preferred`). No new schema — everything in this spec is query logic and UI over fields that already exist.
 
@@ -163,21 +163,34 @@ E3. **States**, in order of precedence:
    - **strong** — ≥3 solved, the average of `Problem.confidence` over the *rated* ones is ≥4, and none of the group's problems are currently due per Part D's `isDue`.
    - **weak** — ≥3 solved and not strong (this covers a low average, several low ratings, an all-unrated group, and a good-but-stale average alike — anything short of confidently strong is worth a second look, which is what this section is for).
 E4. A group with solved placements but zero ratings among them is **weak**, not "not reached" — it has a sample, it's just unrated, and burying that would hide exactly the unrated-solve problem CLAUDE.local.md calls out.
+E5. **What the card shows (built at the user's request to have Part E in place before any ratings exist; redesigned the same day when the plain text list read poorly):** a segmented overview bar across all topics (strong / need a second look / not reached) with a count legend; then, for topics with enough solves to judge, a row each under "Strong" and "Needs a second look" — the topic's short name, its stage label beside it ("Stage 1", "Stages 4A · 4B"), and "solved/total". Once a topic has ratings the row gets a meter filled to its average on the 1-5 scale with a tick at the "strong" line (4), plus the details: "avg 5.0", "N due", "N unrated". With no ratings there is nothing to plot, so the row stays a single line ending "not rated yet". "Not reached" topics are only counted in the bar and folded into a "N not reached yet — not counted against you" list that opens to show each topic with its solved/total, so the card can't read as a list of failures. While any weak topic has no ratings at all, a one-line hint says to rate solved problems on the roadmap. The card sits in the dashboard's right column under the calendar; layout is expected to keep changing. Until problems are rated, **every topic with 3 or more solves is "weak"** by E3/E4 — the rule working, not a bug.
+E6. Ratings and staleness belong to the problem, so a problem solved in two stages of the same group is looked at once for the average and the due check, while the sample size (E2) still counts placements.
 
 ### Scope
 
-In scope: `lib/strengthsWeaknesses.ts` (the constants — `MIN_SAMPLE = 3`, `STRONG_AVG_THRESHOLD = 4` — and the per-stage/group aggregation, reusing `isDue` from Part D); `app/StrengthsWeaknesses.tsx` on the dashboard, grouping stages the same way `StageSection.tsx` already does for rendering.
+In scope: `lib/strengthsWeaknesses.ts` (the constants — `MIN_SAMPLE = 3`, `STRONG_AVG_THRESHOLD = 4` — and the per-stage/group aggregation, reusing `isDue` from Part D); `app/StrengthsWeaknessesCard.tsx` on the dashboard, grouping stages the same way `StageSection.tsx` already does for rendering.
 
 Out of scope: per-tag or per-company strengths; anything below stage/group grain (no `Track` or pattern data yet); a detail drill-down page (the roadmap page already shows the underlying rows).
 
 ### Acceptance criteria
 
-- [ ] A stage with 2 solved placements shows "not reached" regardless of their ratings.
-- [ ] A stage with 3+ solved, all rated 5, none due, shows "strong".
-- [ ] A stage with 3+ solved, all rated 5 but one now overdue per the review queue, shows "weak" (E3's staleness clause), verified against the same fixture as Part D.
-- [ ] A stage with 3+ solved and no ratings at all shows "weak", not "not reached".
-- [ ] A `StageGroup`'s state is computed over all its member stages' placements combined, matching a hand-summed count from the database.
-- [ ] All three states render distinctly (not just a percentage) and every stage/group appears in exactly one bucket.
+- [x] A stage with 2 solved placements shows "not reached" regardless of their ratings.
+- [x] A stage with 3+ solved, all rated 5, none due, shows "strong".
+- [x] A stage with 3+ solved, all rated 5 but one now overdue per the review queue, shows "weak" (E3's staleness clause) — uses Part D's own `isDue`, with the overdue case built as a fixture rather than the Part D fixture itself.
+- [x] A stage with 3+ solved and no ratings at all shows "weak", not "not reached".
+- [x] A `StageGroup`'s state is computed over all its member stages' placements combined, matching a hand-summed count from the database.
+- [x] All three states render distinctly (not just a percentage) and every stage/group appears in exactly one bucket.
+
+### Verification
+
+Checked 2026-09-25, built before the user has rated anything so it could be in place. The live database was compared before and after: 40 log rows, 0 rated problems, 40 solved placements, unchanged.
+
+- **Fixtures (18 checks):** `lib/strengthsWeaknesses.ts` compiled with `tsc` and run in node against a dummy database URL so nothing could reach real data. They cover each criterion above; a group of two 2-solved stages merging into one 4-solved strong unit while a lone 2-solved stage stays not reached; average exactly 4 being strong and 3.75 being weak; 3 rated 5 plus 1 unrated being weak (an unrated solve is always due); a rated problem with no review date being weak; the same problem solved in two stages of one group counting twice for the sample and once for the average; unsolved placements never counting (2 solved of 5 → not reached, total 5); a stage with nothing solved but old ratings staying not reached; every unit landing in exactly one state, in roadmap order; and an empty roadmap not crashing. The script was a throwaway in a temp folder, not added to the repo.
+- **Live data, read-only:** the dashboard shows "0 strong · 4 weak", the four groups with 3 or more solves (Hashing 8, Array-as-Hashmap 4, Two Pointers 12, Sliding Window 10), each "no ratings yet", the rating hint, and "20 not reached yet". A separate SQL hand count of solved placements per unit (groups merged) gave the same 8/4/12/10, and 4 + 20 = 24 units, the 11 groups plus 13 standalone stages.
+- **Rated cases, on a scratch copy of the database** (`pg_dump` → scratch database, app copy on port 3100, both deleted afterwards): I rated 35 solved problems to build one of each case — Hashing all 5 and recent → strong; Array-as-Hashmap all 5 with one reviewed 40 days ago → weak, "1 due for review"; Two Pointers all 3 → weak, "avg 3.0"; Sliding Window all 5 with one unrated → weak, "1 unrated"; Stage 3 with 2 solved and rated 5 → still not reached. The card read "1 strong · 3 weak", 20 not reached, and an independent SQL computation of solved count, average, unrated, due count and state per unit (using the same interval mapping) agreed on every unit: 1 strong, 3 weak, 20 not reached.
+- **Visual:** headless-Chrome screenshots of the rated scratch copy and of the live dashboard, in the dark theme, with the card in the right column under the calendar; re-checked after the redesign (overview bar, meters with the strong tick, single-line unrated rows, the folded not-reached list with 20 topics, three more name/kicker fixtures).
+
+**Not verified:** the card in the user's own browser or in the light theme; its scroll area with many weak units (capped at about 18rem, not exercised); how the state rules feel once the user has really rated problems — the open item about E3's "not confidently strong ⇒ weak" simplification below is still open, and the review-queue side (Part D) still has not run against real rated data.
 
 ## Part F — Personalisation (target companies)
 
@@ -240,6 +253,7 @@ Since the company card (spec 007) and the activity calendar (spec 008) were adde
 - **Company-specific dashboard content (F6):** spec 007 covers the first cut (per-company roadmap progress and next pick). Still open: a "what your companies ask that you haven't solved" gap list including off-roadmap questions, which waits on the company view (Phase 4).
 - The next-up and review-queue reordering rules (B3, D4) are the first real use of `is_preferred` as a *ranking* signal rather than a display filter; if it turns out to matter which of several preferred companies wins when a problem matches more than one, that's unspecified here (any match counts equally).
 - Strengths/weaknesses' "not confidently strong ⇒ weak" rule (E3) is a deliberate simplification or a real design decision, not verified against how it feels once there's more rated data across the roadmap.
+- **Five topics can never be judged.** The rule needs 3 solved placements, but Stage 0, Bridge B, Stage 6 and Stage 7 contain one problem each and Stage 3 contains two, so they stay "not reached" even when completely solved. Probably the sample should be min(3, the topic's size) so a fully solved small topic counts; not decided or changed here.
 - No UI is specified for confirming the minimized card (Part C) reads well once B/D/E/F are sitting next to it and the dashboard actually has competing sections — this is a judgement call to revisit now that E/F exist as sections to actually check it against. (The real click-through owed since spec 005 happened on 2026-09-22 and is recorded there.)
 - The review queue and strengths/weaknesses share the notion of "due" (Part D's `isDue`) but nothing here defines what happens once `ReviewLog`-per-stage history (rather than the problem-level roll-up) becomes relevant for a problem with several placements — deferred until it's actually needed.
 - **Part D needs a revisit** (see the flag at the top of that section): the Solved/Revised/Revisited redesign was never folded back into this spec's decisions or acceptance criteria, and none of that criteria has been checked against real rated/revisited data — there is none yet.
