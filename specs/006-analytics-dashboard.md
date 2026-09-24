@@ -1,6 +1,6 @@
 # Spec 006 — Analytics Dashboard Becomes the Homepage
 
-Status: Parts A and C built and verified (commit `f7a4c2c`). Part B built and verified, not yet committed. Parts D, E, F not started.
+Status: Parts A, B, C built and verified. Part D built, then redesigned twice past what its own text below describes (see the note at the top of Part D) — **needs a closer look before it's called done.** Parts E, F not started.
 Depends on: 003 (roadmap data), 004 (roadmap view), 005 (confidence, `ReviewLog`, tags, filters, company `is_preferred`).
 Phase: 2 of the plan. Reads what spec 005 recorded (confidence, `last_solved_date`, `ReviewLog`) and the company layer from spec 005 part F (`Company.is_preferred`). No new schema — everything in this spec is query logic and UI over fields that already exist.
 
@@ -115,6 +115,13 @@ Checked 2026-09-22 (see Part A's Verification — same session, same server, rea
 
 ## Part D — Review queue
 
+**⚠ Revisit later.** Everything below is what this spec originally scoped and it's still the ranking logic actually running (`lib/reviewQueue.ts` — `isDue`, `daysOverdue`, `rankQueue` — is unchanged from D1–D4). But the *interaction* shipped, then went through two more redesigns the spec was never updated for:
+- A `ReviewEventType` enum (`Solved` / `Revised` / `Revisited`) and `Problem.last_reviewed_date` were added (migration `add_review_event_types`) so a "just looked at it again" event could reset the staleness clock without pretending it was a fresh solve.
+- The UI tried per-event icons, then checkboxes, then settled on **one "Revisited?" counter button with an undo** (`app/RevisitButton.tsx`) — logging a `Revisited` event and bumping `last_reviewed_date`. The Re-solve button and the overdue-days label were both removed along the way.
+- None of the acceptance criteria below were re-verified against that final shape, and the live database currently has **0 rated problems**, so the interval mapping has never been exercised against real data — only against the ranking-logic fixtures noted in each item.
+
+Come back to this once there's real rated/revisited data to judge it against, and either update the criteria to match what's actually there or decide the interaction needs another pass.
+
 ### Goal
 
 Surface solved problems worth revisiting, ordered by how overdue they are.
@@ -205,5 +212,6 @@ Out of scope: focus tracks, ranking weights, off-roadmap questions from target c
 
 - The next-up and review-queue reordering rules (B3, D4) are the first real use of `is_preferred` as a *ranking* signal rather than a display filter; if it turns out to matter which of several preferred companies wins when a problem matches more than one, that's unspecified here (any match counts equally).
 - Strengths/weaknesses' "not confidently strong ⇒ weak" rule (E3) is a deliberate simplification or a real design decision, not verified against how it feels once there's more rated data across the roadmap.
-- No UI is specified for confirming the minimized card (Part C) reads well once B/D/E/F are sitting next to it and the dashboard actually has competing sections — this is a judgement call to revisit after the real click-through owed since spec 005.
+- No UI is specified for confirming the minimized card (Part C) reads well once B/D/E/F are sitting next to it and the dashboard actually has competing sections — this is a judgement call to revisit now that E/F exist as sections to actually check it against. (The real click-through owed since spec 005 happened on 2026-09-22 and is recorded there.)
 - The review queue and strengths/weaknesses share the notion of "due" (Part D's `isDue`) but nothing here defines what happens once `ReviewLog`-per-stage history (rather than the problem-level roll-up) becomes relevant for a problem with several placements — deferred until it's actually needed.
+- **Part D needs a revisit** (see the flag at the top of that section): the Solved/Revised/Revisited redesign was never folded back into this spec's decisions or acceptance criteria, and none of that criteria has been checked against real rated/revisited data — there is none yet.
