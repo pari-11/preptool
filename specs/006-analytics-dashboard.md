@@ -1,6 +1,6 @@
 # Spec 006 — Analytics Dashboard Becomes the Homepage
 
-Status: Parts A, B, C built and verified. Part D built, then redesigned twice past what its own text below describes (see the note at the top of Part D) — **needs a closer look before it's called done.** Parts E, F not started.
+Status: Parts A, B, C built and verified. Part D built, then redesigned twice past what its own text below describes (see the note at the top of Part D) — **needs a closer look before it's called done.** Part F built and verified on an isolated rig, with its UI on a new `/profile` page rather than the dashboard (see Part F); not yet clicked through in a real browser. Part E not started.
 Depends on: 003 (roadmap data), 004 (roadmap view), 005 (confidence, `ReviewLog`, tags, filters, company `is_preferred`).
 Phase: 2 of the plan. Reads what spec 005 recorded (confidence, `last_solved_date`, `ReviewLog`) and the company layer from spec 005 part F (`Company.is_preferred`). No new schema — everything in this spec is query logic and UI over fields that already exist.
 
@@ -188,21 +188,44 @@ Let target companies be declared once and have that declaration bend `next up` a
 ### Decisions
 
 F1. **No new schema.** "Target company" is exactly `Company.is_preferred`, already used by the roadmap's CompanyWise chips (spec 005 part F). This section is a second surface for the same flag, not a new concept.
-F2. **A dashboard card lists every non-excluded company** (`is_excluded = false`) with a toggle bound to `setCompanyPreferred` (the existing action), preferred ones sorted first, a text filter box above the list (mirroring CompanyWise's search, since there are ~50 companies) — but no roadmap-filtering affordance here, that stays CompanyWise's job on `/roadmap`. Toggling from either surface is the same underlying flag and shows up on both immediately.
-F3. **The ranking signal is exactly what Parts B and D already specify** — a preferred-company match reorders among equally-eligible candidates (same stage in B, same overdue-ness in D) and never changes which stage is reachable or which problem counts as solved. This section doesn't add a third ranking use; it's the input the other two already consume.
+F2. **The picker lives on a profile page, not the dashboard** (revised at build time, at the user's direction). `/profile` is a new route, linked from the right-hand side of the header beside the theme toggle (not in the left nav with Dashboard/Roadmap, since it's about the user rather than a section of the tool). It shows a "Which companies are you targeting?" card listing every non-excluded company (`is_excluded = false`) with a text filter box (mirroring CompanyWise's search, since there are ~50 companies). Added companies sort first.
+F3. **Each row has an explicit button, not a star:** an outline "Add" button, which becomes a filled "Added ✓" button once picked; clicking "Added" removes it. Both call `setCompanyPreferred` (the existing action). CompanyWise's star on `/roadmap` stays as it was and is a second surface for the same flag — toggling from either shows up on both, and there's no roadmap-filtering affordance on the profile card.
+F4. **Built to be reused as a first-run question.** The card (`PersonalisationCard`) has no dependency on the profile page around it, because the intent is that this becomes one of the questions asked when a user first signs up, in the style of "personalise your feed" onboarding. Sign-up and onboarding don't exist yet and are not built here; with a single implicit user, `/profile` is where it lives for now.
+F5. **The ranking signal is exactly what Parts B and D already specify** — a preferred-company match reorders among equally-eligible candidates (same stage in B, same overdue-ness in D) and never changes which stage is reachable or which problem counts as solved. This section doesn't add a third ranking use; it's the input the other two already consume, and both already read `is_preferred` directly, so no change to `lib/nextUp.ts` or `lib/reviewQueue.ts` was needed.
+F6. **Direction, not built here: the dashboard is meant to carry content specific to the companies chosen in the profile.** Today the only effect is reordering inside Next up and the review queue (F5). The intent is broader — what the dashboard shows should be shaped by the picked companies (for example per-company progress, and the gap between what they ask and what's been solved). That belongs to the company view / gap-analysis work (CLAUDE.local.md Phase 4) and the dashboard's company-progress section; when it is specced, it should read the same `is_preferred` set and keep the "reorders and highlights, never unlocks" rule.
 
 ### Scope
 
-In scope: `app/PersonalisationCard.tsx` (list + toggle + filter box); wiring its output (the set of preferred company ids) into `lib/nextUp.ts` and `lib/reviewQueue.ts`.
+In scope: `app/profile/page.tsx`; `app/PersonalisationCard.tsx` (loads companies) and `app/PersonalisationList.tsx` (filter box + Add/Added buttons); a Profile link in `app/AppHeader.tsx`; `/profile` added to `revalidateAll` in `app/actions.ts` so a toggle refreshes it.
 
-Out of scope: focus tracks, ranking weights, off-roadmap questions from target companies (later phases per CLAUDE.local.md); a dedicated personalisation settings page; company exclusion UI (`is_excluded` stays SQL-only, as spec 005 left it).
+Out of scope: sign-up / first-run onboarding flow; company-specific dashboard content (F6); focus tracks, ranking weights, off-roadmap questions from target companies (later phases per CLAUDE.local.md); any other profile content (name, avatar, account settings); company exclusion UI (`is_excluded` stays SQL-only, as spec 005 left it).
 
 ### Acceptance criteria
 
-- [ ] Toggling a company preferred from the dashboard card updates `Company.is_preferred` and is reflected in CompanyWise on `/roadmap` without a manual refresh mismatch (both read the same table).
-- [ ] The search box narrows the list by name substring, case-insensitive.
-- [ ] With two companies preferred, both Part B and Part D's reordering criteria were re-checked with this card as the thing that set them (not a direct SQL update, unlike spec 005 part F's verification note for the same field).
-- [ ] Excluded companies never appear in the card's list.
+- [x] Clicking Add / Added on the profile card updates `Company.is_preferred` (checked by invoking the same server action the button calls, on the rig database).
+- [ ] The change is reflected in CompanyWise on `/roadmap` — both read the same column, but `/roadmap` was not loaded after a toggle.
+- [ ] The search box narrows the list by name substring, case-insensitive — the input and filter are written; typing into it was not exercised.
+- [x] With a company targeted through the card's action, Part B's pick reorders inside the current stage (Stage 8A: targeting Google changed the second pick from Min Stack to Evaluate Reverse Polish Notation, and unstarring restored it).
+- [x] Part D's ordering reorders a preferred-company problem ahead of an equally-overdue one (constructed tie on the rig; see Verification).
+- [x] Excluded companies never appear in the card's list.
+- [x] The dashboard (`/`) no longer contains the card; `/profile` does, with an "Add" button per company and no star icons.
+- [x] "Profile" appears in the header's right-hand group beside the theme toggle, not in the left nav.
+
+### Verification
+
+Checked on 2026-09-24 on an isolated rig (a `pg_dump` copy of the database as a scratch database, an app copy under `.rig-scratch/` on port 3100), all deleted afterwards. The live database was compared before and after: 0 targeted companies, 40 log rows, 40 solved placements, unchanged.
+
+- Rendering was checked by fetching the pages as HTML: `/profile` has the heading and 47 "Add" buttons (one per non-excluded company, matching the database count) and no star icons; `/` no longer has the card; the header markup has the Profile link inside the right-hand group.
+- Toggling was done by POSTing to the same server action the button calls, not by clicking. After one add, the card read "1 added", that row's label became "Remove AMD" with an "Added" button, and the live database was untouched.
+- Excluded: setting `is_excluded` on one company in the scratch database removed its row; restoring it brought it back.
+- Part B: as above.
+- Part D: the real data has no rated problems (every solved problem is due as "unrated" with tied overdue days), so I made two solved problems equally overdue in the scratch database, one asked by Google and one not, with the non-Google one slightly older. With no targets the non-Google one was first; with Google targeted the Google one was first.
+
+**Not verified:** nothing was clicked in a real browser (button appearance and states, the filter box, the header layout at narrow widths); CompanyWise reflecting a change made from the profile page; the dark-mode look of the Added button.
+
+## Header note (Part A, amended by Part F)
+
+`AppHeader` (Part A, A3) now also has a "Profile" link on the right, beside the theme toggle; the left nav is still Dashboard and Roadmap.
 
 ## Out of scope (whole spec)
 
@@ -210,6 +233,7 @@ Out of scope: focus tracks, ranking weights, off-roadmap questions from target c
 
 ## Open items
 
+- **Company-specific dashboard content (F6) is a stated direction with no spec yet.** Its shape (per-company progress, a "what your companies ask that you haven't solved" gap list, how it behaves with many targets versus none) needs settling before anything is built.
 - The next-up and review-queue reordering rules (B3, D4) are the first real use of `is_preferred` as a *ranking* signal rather than a display filter; if it turns out to matter which of several preferred companies wins when a problem matches more than one, that's unspecified here (any match counts equally).
 - Strengths/weaknesses' "not confidently strong ⇒ weak" rule (E3) is a deliberate simplification or a real design decision, not verified against how it feels once there's more rated data across the roadmap.
 - No UI is specified for confirming the minimized card (Part C) reads well once B/D/E/F are sitting next to it and the dashboard actually has competing sections — this is a judgement call to revisit now that E/F exist as sections to actually check it against. (The real click-through owed since spec 005 happened on 2026-09-22 and is recorded there.)

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Route } from 'lucide-react';
+import { LayoutDashboard, Route, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -46,7 +46,20 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <Link
+            href="/profile"
+            aria-current={pathname.startsWith('/profile') ? 'page' : undefined}
+            className={cn(
+              'flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+              pathname.startsWith('/profile')
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            <UserRound className="size-4" />
+            Profile
+          </Link>
           <ThemeToggle />
         </div>
       </div>
