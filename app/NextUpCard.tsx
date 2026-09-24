@@ -57,12 +57,12 @@ export async function NextUpCard() {
         </span>
       </div>
 
-      <ul className="mt-3 flex flex-col gap-1">
+      <ul className="mt-2 flex flex-col gap-0.5">
         {nextUp.problems.map((problem) => (
           <li key={problem.id}>
             <Link
               href={`/problems/${problem.id}`}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+              className="flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors hover:bg-muted"
             >
               {problem.difficulty && (
                 <span className={cn('size-1.5 shrink-0 rounded-full', DIFFICULTY_DOT[problem.difficulty])} />

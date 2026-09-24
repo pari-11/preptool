@@ -132,7 +132,7 @@ D1. Eligibility: `Problem.is_solved = true` only (the roll-up — a problem solv
 D2. Due check: `last_solved_date + intervalDays(confidence) <= today`, using the mapping settled above, read from `Problem.confidence` and `Problem.last_solved_date` (the problem-level fields — review state attaches to the problem's identity, same as confidence itself, not to a placement).
 D3. Ordering: most-overdue first (`today − dueDate`, descending); ties broken by lower confidence first, then by `last_solved_date` ascending (older solve first).
 D4. **Company priority reorders within the due set, same rule as Part B:** a due problem asked by a preferred company sorts ahead of an equally-overdue one that isn't, but never ahead of something more overdue. This is Part F's ranking signal, not a separate mechanism.
-D5. The dashboard shows the top 5 due items and a total due count; there's no dedicated `/review` route yet — if the list is worth a full page later, that's a follow-up, not part of this spec.
+D5. The dashboard shows the top 3 due items (changed from 5 on 2026-09-25 so the card can sit beside Next up and leave room for more cards) and a total due count; there's no dedicated `/review` route yet — if the list is worth a full page later, that's a follow-up, not part of this spec.
 
 ### Scope
 
@@ -226,6 +226,10 @@ Checked on 2026-09-24 on an isolated rig (a `pg_dump` copy of the database as a 
 ## Header note (Part A, amended by Part F)
 
 `AppHeader` (Part A, A3) now also has a "Profile" link on the right, beside the theme toggle; the left nav is still Dashboard and Roadmap.
+
+## Dashboard layout note
+
+Since the company card (spec 007) and the activity calendar (spec 008) were added, `/` has two parts so the cards stay compact and there is room for more: a top row with Next up and the review queue side by side (both short and similar in height, so aligned rows leave no gap; the review queue shows its top 3, and both cards' rows are tighter than first built), then two independent columns below — progress and Your companies on the left, the calendar on the right — so short cards aren't stretched to match tall neighbours. New cards go at the bottom of whichever column is shorter. Checked with a headless screenshot at 1200px wide: the whole dashboard is about 830px tall (it was about 940px), with no gaps inside any card or column.
 
 ## Out of scope (whole spec)
 

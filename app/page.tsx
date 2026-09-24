@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { NextUpCard } from './NextUpCard';
 import { ReviewQueueCard } from './ReviewQueueCard';
 import { TargetCompaniesCard } from './TargetCompaniesCard';
+import { ActivityCalendarCard } from './ActivityCalendarCard';
 
 // Progress at a glance, minimized: the same numbers the roadmap page's four tiles show (see
 // lib/roadmapStats.ts), condensed into one card since the dashboard has other sections to fit.
@@ -47,7 +48,7 @@ async function RoadmapProgressCard() {
   );
 }
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: { month?: string } }) {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-8 sm:px-6">
       <header>
@@ -57,18 +58,25 @@ export default function Home() {
         </p>
       </header>
 
-      <section aria-label="Next up" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <NextUpCard />
-        <TargetCompaniesCard />
-      </section>
+      <div className="flex flex-col gap-3">
+        {/* The two "what to do now" cards sit side by side and stay compact, so there is room
+            below for more. They are similar in height, so aligned rows don't leave gaps here. */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <NextUpCard />
+          <ReviewQueueCard />
+        </div>
 
-      <section aria-label="Progress at a glance" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <RoadmapProgressCard />
-      </section>
-
-      <section aria-label="Review queue" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ReviewQueueCard />
-      </section>
+        {/* Below, independent columns rather than aligned rows: the company list and the calendar
+            are tall and progress is short, and rows would stretch the short one into empty space.
+            New cards go at the bottom of whichever column is shorter. */}
+        <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-3">
+            <RoadmapProgressCard />
+            <TargetCompaniesCard />
+          </div>
+          <ActivityCalendarCard month={searchParams.month} />
+        </div>
+      </div>
     </div>
   );
 }
