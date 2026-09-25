@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma';
 import { isValidConfidence } from '@/lib/confidence';
 import { clearSolved, recordReview, recordSolve, undoLastRevisit } from '@/lib/solve';
 import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor } from '@/lib/tags';
+import { search, searchProblems } from '@/lib/search';
+import { createProblemLink, deleteItemLink } from '@/lib/itemLinks';
+import type { ItemLinkType } from '@prisma/client';
 
 function revalidateAll() {
   revalidatePath('/');
@@ -172,4 +175,28 @@ export async function deleteTag(tagId: string) {
 export async function setCompanyPreferred(companyId: string, on: boolean) {
   await prisma.company.updateMany({ where: { id: companyId }, data: { is_preferred: on } });
   revalidateAll();
+}
+
+// Header search (spec 010): read-only, no revalidation needed. Kept as a thin action wrapper since
+// client components can't call lib/search.ts (which touches prisma) directly.
+export async function runSearch(query: string) {
+  return search(query);
+}
+
+// The narrower problem-only search the "add link" picker uses to find a target problem.
+export async function runProblemSearch(query: string, excludeId: string) {
+  return searchProblems(query, excludeId);
+}
+
+// Adds a manual link between two problems (spec 010). A duplicate edge is a no-op, not an error —
+// see lib/itemLinks.ts. Only the problem page needs to refresh (both ends, since a link shows on
+// either problem), so this skips revalidateAll's other, unrelated paths.
+export async function addProblemLink(problemId: string, targetProblemId: string, linkType: ItemLinkType, label: string) {
+  await createProblemLink(problemId, targetProblemId, linkType, label);
+  revalidatePath('/problems/[id]', 'page');
+}
+
+export async function removeProblemLink(linkId: string) {
+  await deleteItemLink(linkId);
+  revalidatePath('/problems/[id]', 'page');
 }

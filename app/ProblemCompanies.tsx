@@ -21,14 +21,9 @@ export function ProblemCompanies({ companies }: { companies: ProblemCompanyRow[]
     <details className="group/companies mt-1">
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded text-[11px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
         <ChevronRight className="size-3 transition-transform group-open/companies:rotate-90" aria-hidden />
-        <span className="flex -space-x-1">
+        <span className="flex gap-0.5">
           {preferred.slice(0, 4).map((c) => (
-            <CompanyLogo
-              key={c.id}
-              name={c.name}
-              logo={logoSrc(companySlug(c.name))}
-              className="size-3.5 ring-1 ring-card"
-            />
+            <CompanyLogo key={c.id} name={c.name} logo={logoSrc(companySlug(c.name))} className="size-3.5" />
           ))}
         </span>
         <span className="tabular-nums">

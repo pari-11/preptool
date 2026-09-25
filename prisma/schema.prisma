@@ -197,3 +197,38 @@ model ResourceCompany {
 
   @@id([resource_id, company_id])
 }
+
+enum ItemLinkType {
+  SameProblem // symmetric: the same underlying problem, phrased/sourced differently
+  HarderVariant // directional: to_id is the harder version of from_id
+  SameInsight // symmetric: different problems, same core idea
+  Prerequisite // directional: from_id should be solved before to_id
+  FreeForm // no implied relationship; the label carries the meaning
+}
+
+enum LinkCreator {
+  User
+  System // reserved for Phase 5 (embeddings/LLM); nothing writes this yet
+}
+
+// A user-made connection between two items (spec 010, Phase 3 of CLAUDE.local.md's link layer).
+// Deliberately polymorphic with no FK integrity — from_type/to_type/from_id/to_id are plain
+// strings, not relations, so this can point at a Resource or a future Concept later without a
+// migration; the app is responsible for cleaning up rows when the thing they point at is deleted.
+// v1 only ever writes from_type = to_type = "Problem". Symmetric types (SameProblem, SameInsight)
+// are stored once and shown identically from either end; directional types (HarderVariant,
+// Prerequisite) read differently depending which side you're looking from.
+model ItemLink {
+  id         String       @id @default(cuid())
+  from_type  String
+  from_id    String
+  to_type    String
+  to_id      String
+  link_type  ItemLinkType
+  label      String?
+  created_by LinkCreator  @default(User)
+  created_at DateTime     @default(now())
+
+  @@index([from_type, from_id])
+  @@index([to_type, to_id])
+}

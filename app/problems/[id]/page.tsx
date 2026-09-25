@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Lock } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { confidenceLabel } from '@/lib/confidence';
+import { getProblemLinks } from '@/lib/itemLinks';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { RevisitButton } from '@/app/RevisitButton';
 import { ProblemTags } from '@/app/ProblemTags';
 import { TagsProvider } from '@/app/TagsProvider';
 import { NoteEditor } from './NoteEditor';
+import { LinksCard } from './LinksCard';
 
 const DIFFICULTY_STYLES = {
   Easy: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400',
@@ -35,7 +37,7 @@ const formatDateTime = (d: Date) =>
   d.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default async function ProblemPage({ params }: { params: { id: string } }) {
-  const [problem, tagRows] = await Promise.all([
+  const [problem, tagRows, links] = await Promise.all([
     prisma.problem.findUnique({
       where: { id: params.id },
       include: {
@@ -49,6 +51,7 @@ export default async function ProblemPage({ params }: { params: { id: string } }
       orderBy: [{ is_preset: 'desc' }, { created_at: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { problems: true } } },
     }),
+    getProblemLinks(params.id),
   ]);
   if (!problem) notFound();
   const reviewCounts = { Solved: 0, Revised: 0, Revisited: 0 };
@@ -209,6 +212,8 @@ export default async function ProblemPage({ params }: { params: { id: string } }
             <NoteEditor problemId={problem.id} initial={problem.user_note ?? ''} />
           </CardContent>
         </Card>
+
+        <LinksCard problemId={problem.id} links={links} />
 
         <Card className="shadow-sm">
           <CardHeader>

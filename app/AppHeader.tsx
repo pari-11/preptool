@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Building2, LayoutDashboard, Route, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
+import { SearchBox } from './SearchBox';
 
 const LINKS = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, isActive: (p: string) => p === '/' },
@@ -48,6 +49,7 @@ export function AppHeader() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1">
+          <SearchBox />
           <Link
             href="/profile"
             aria-current={pathname.startsWith('/profile') ? 'page' : undefined}
