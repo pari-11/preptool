@@ -46,8 +46,10 @@ function Row({ unit }: { unit: UnitStrength }) {
   const rated = unit.average !== null;
   return (
     <li className="py-1.5">
-      <div className="flex items-baseline gap-2">
-        <span className="min-w-0 flex-1 truncate" title={unit.title}>
+      {/* flex-wrap rather than truncate: a long name (e.g. "Frequency / Memory → Hashing") pushes
+          the solved count onto its own line instead of being cut off. */}
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="min-w-0 flex-1" title={unit.title}>
           <span className="text-sm font-medium">{unit.name}</span>
           <span className="ml-1.5 text-[11px] text-muted-foreground">{unit.kicker}</span>
         </span>

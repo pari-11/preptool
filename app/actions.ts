@@ -11,6 +11,7 @@ function revalidateAll() {
   revalidatePath('/roadmap');
   revalidatePath('/profile');
   revalidatePath('/problems/[id]', 'page');
+  revalidatePath('/companies/[id]', 'page');
 }
 
 // Ticking on records a solve (see lib/solve.ts); ticking off only clears the flag.

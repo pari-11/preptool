@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Route, UserRound } from 'lucide-react';
+import { Building2, LayoutDashboard, Route, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -14,6 +14,7 @@ const LINKS = [
     icon: Route,
     isActive: (p: string) => p.startsWith('/roadmap') || p.startsWith('/problems'),
   },
+  { href: '/companies', label: 'Companies', icon: Building2, isActive: (p: string) => p.startsWith('/companies') },
 ];
 
 export function AppHeader() {

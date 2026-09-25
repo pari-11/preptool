@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Check, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
+import { Check, ChevronRight, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CompanyLogo } from './CompanyLogo';
 import { setCompanyPreferred } from './actions';
@@ -42,9 +43,17 @@ export function PersonalisationList({ companies }: { companies: TargetCompany[] 
           <li className="px-2 py-6 text-center text-[13px] text-muted-foreground">No company matches “{query}”.</li>
         )}
         {visible.map((company) => (
-          <li key={company.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px]">
-            <CompanyLogo name={company.name} logo={company.logo} />
-            <span className="min-w-0 flex-1 truncate font-medium">{company.name}</span>
+          <li key={company.id} className="flex items-center gap-1 py-0.5 text-[13px]">
+            {/* The visible chevron, not just a hover state, is what makes this read as a link to
+                the company's own page rather than plain text next to the Add button. */}
+            <Link
+              href={`/companies/${company.id}`}
+              className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted"
+            >
+              <CompanyLogo name={company.name} logo={company.logo} />
+              <span className="min-w-0 flex-1 truncate font-medium">{company.name}</span>
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+            </Link>
             <Button
               type="button"
               size="sm"

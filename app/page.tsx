@@ -51,7 +51,7 @@ async function RoadmapProgressCard() {
 
 export default function Home({ searchParams }: { searchParams: { month?: string } }) {
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-8 sm:px-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-8 sm:px-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -59,27 +59,30 @@ export default function Home({ searchParams }: { searchParams: { month?: string 
         </p>
       </header>
 
-      <div className="flex flex-col gap-3">
-        {/* The two "what to do now" cards sit side by side and stay compact, so there is room
-            below for more. They are similar in height, so aligned rows don't leave gaps here. */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <NextUpCard />
-          <ReviewQueueCard />
+      {/* Target companies gets its own thin column on the right: that list only grows, and
+          squeezing it into a shared row/column meant either capping it short or letting it push
+          everything else around. Everything else sits in the wider main column and shifts left. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-3">
+          {/* The two "what to do now" cards sit side by side and stay compact. They are similar
+              in height, so aligned rows don't leave gaps here. */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <NextUpCard />
+            <ReviewQueueCard />
+          </div>
+
+          {/* Independent columns rather than aligned rows: the calendar is taller than progress +
+              strengths/weaknesses stacked, and a row would stretch the short one into empty space. */}
+          <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-3">
+              <RoadmapProgressCard />
+              <StrengthsWeaknessesCard />
+            </div>
+            <ActivityCalendarCard month={searchParams.month} />
+          </div>
         </div>
 
-        {/* Below, independent columns rather than aligned rows: the company list and the calendar
-            are tall and progress is short, and rows would stretch the short one into empty space.
-            New cards go at the bottom of whichever column is shorter. */}
-        <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-3">
-            <RoadmapProgressCard />
-            <TargetCompaniesCard />
-          </div>
-          <div className="flex flex-col gap-3">
-            <ActivityCalendarCard month={searchParams.month} />
-            <StrengthsWeaknessesCard />
-          </div>
-        </div>
+        <TargetCompaniesCard />
       </div>
     </div>
   );

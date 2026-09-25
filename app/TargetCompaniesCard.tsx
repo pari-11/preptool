@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { getTargetCompanyProgress } from '@/lib/companyProgress';
 import { companySlug } from '@/lib/companies';
 import { logoSrc } from '@/lib/companyLogos';
@@ -35,19 +35,26 @@ export async function TargetCompaniesCard() {
           and their progress shows up here.
         </p>
       ) : (
-        <ul className="mt-3 flex max-h-96 flex-col gap-3 overflow-y-auto overflow-x-hidden">
+        <ul className="mt-3 flex max-h-[36rem] flex-col gap-3 overflow-y-auto overflow-x-hidden">
           {companies.map((company) => {
             const pct = company.total > 0 ? (company.solved / company.total) * 100 : 0;
             const allSolved = company.total > 0 && company.solved === company.total;
             return (
               <li key={company.id}>
-                <div className="flex items-center gap-2 text-sm">
+                {/* The whole row is the link to the company page — a visible chevron (not just a
+                    hover state) so it reads as a link without having to try clicking it, the same
+                    way "Edit →" and "View roadmap →" do elsewhere on the dashboard. */}
+                <Link
+                  href={`/companies/${company.id}`}
+                  className="-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-muted"
+                >
                   <CompanyLogo name={company.name} logo={logoSrc(companySlug(company.name))} />
                   <span className="min-w-0 flex-1 truncate font-medium">{company.name}</span>
                   <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                     {company.solved}/{company.total}
                   </span>
-                </div>
+                  <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+                </Link>
                 <ProgressBar
                   value={pct}
                   label={`${company.solved} of ${company.total} ${company.name} roadmap problems solved`}
