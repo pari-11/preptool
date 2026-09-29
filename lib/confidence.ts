@@ -1,11 +1,12 @@
 // Confidence is stored as an integer 1-5 on Problem.confidence (null = unrated).
-// The labels are UI copy only; see spec 005 decision 5.
+// Meaning is ease of solving / pattern recognition (changed from struggle-to-solve on 2026-09-28,
+// see CLAUDE.local.md Part 3). The labels are UI copy only; see spec 005 decision 5.
 export const CONFIDENCE_LEVELS = [
-  { value: 1, label: "Couldn't solve it", hint: 'Would fail again' },
-  { value: 2, label: 'Needed the solution', hint: 'Read or copied the answer' },
-  { value: 3, label: 'Lots of struggle or hints', hint: 'Got there, but not cleanly' },
-  { value: 4, label: 'Some hesitation', hint: 'Solved with a few wobbles' },
-  { value: 5, label: 'Got it cold', hint: 'No trouble at all' },
+  { value: 1, label: 'Struggled long, pattern unclear', hint: 'Took a lot of time to understand the solution; pattern was hard' },
+  { value: 2, label: 'Took time, pattern tricky', hint: 'Needed some time to understand; pattern was medium-difficult' },
+  { value: 3, label: 'Needed sol, pattern clicked', hint: 'Checked solution but idea had formed; pattern was understandable' },
+  { value: 4, label: 'Quick check, pattern easy', hint: 'Got the logic, checked solution just to confirm' },
+  { value: 5, label: 'Instant, pattern obvious', hint: 'Barely needed the solution, easy to understand' },
 ] as const;
 
 export function isValidConfidence(value: unknown): value is 1 | 2 | 3 | 4 | 5 {

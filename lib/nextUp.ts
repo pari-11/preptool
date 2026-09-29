@@ -15,6 +15,7 @@ export type NextUpResult =
   | { done: true }
   | {
       done: false;
+      stageId: string;
       stageLabel: string;
       stageTitle: string;
       groupTitle: string | null;
@@ -77,6 +78,7 @@ export async function getNextUp(): Promise<NextUpResult> {
 
   return {
     done: false,
+    stageId: current.id,
     stageLabel: current.stage_label,
     stageTitle: current.group ? stageSubTitle(current.title) : current.title,
     groupTitle: current.group?.title ?? null,

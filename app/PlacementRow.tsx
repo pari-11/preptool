@@ -10,6 +10,7 @@ import { SolvedCheckbox } from './SolvedCheckbox';
 // the 1-5 control (the current rating highlighted, none if it hasn't been rated), so rating is
 // one click and there is no separate "unrated" state to see.
 export function PlacementRow({
+  id,
   problemId,
   stageId,
   isSolved,
@@ -17,6 +18,7 @@ export function PlacementRow({
   meta,
   children,
 }: {
+  id?: string;
   problemId: string;
   stageId: string;
   isSolved: boolean;
@@ -29,7 +31,10 @@ export function PlacementRow({
   useEffect(() => setSolved(isSolved), [isSolved]);
 
   return (
-    <li className="group flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 transition-colors hover:bg-muted/50 sm:flex-nowrap sm:px-5">
+    <li
+      id={id}
+      className="group scroll-mt-20 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 transition-colors hover:bg-muted/50 sm:flex-nowrap sm:px-5"
+    >
       <SolvedCheckbox problemId={problemId} stageId={stageId} isSolved={isSolved} onToggle={setSolved} />
       <div className={cn('min-w-0 flex-1', isSolved && 'text-muted-foreground')}>{children}</div>
       <div className="flex basis-full items-center gap-2 pl-7 sm:basis-auto sm:pl-0">

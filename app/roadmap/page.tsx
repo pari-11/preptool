@@ -1,10 +1,13 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { Target } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { isFiltering, parseFilters, placementMatches } from '@/lib/roadmapFilters';
 import { companySlug, type CompanyInfo } from '@/lib/companies';
 import { logoSrc } from '@/lib/companyLogos';
+import { getNextUp } from '@/lib/nextUp';
 import { getRoadmapStats } from '@/lib/roadmapStats';
+import { CONFIDENCE_LEVELS } from '@/lib/confidence';
 import type { TagInfo } from '@/lib/tags';
 import { ProgressBar } from '@/components/ProgressBar';
 import { cn } from '@/lib/utils';
@@ -64,7 +67,7 @@ export default async function RoadmapPage({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const [stages, tagRows, companyRows, stats] = await Promise.all([
+  const [stages, tagRows, companyRows, stats, nextUp] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: 'asc' }, include: stageInclude }),
     prisma.tag.findMany({
       orderBy: [{ is_preset: 'desc' }, { created_at: 'asc' }, { name: 'asc' }],
@@ -72,6 +75,7 @@ export default async function RoadmapPage({
     }),
     prisma.company.findMany({ where: { is_excluded: false }, orderBy: { name: 'asc' } }),
     getRoadmapStats(),
+    getNextUp(),
   ]);
 
   const tags: TagInfo[] = tagRows.map((t) => ({
@@ -195,6 +199,15 @@ export default async function RoadmapPage({
           ))}
         </section>
 
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground/70">Rating:</span>
+          {CONFIDENCE_LEVELS.map((level) => (
+            <span key={level.value} className="whitespace-nowrap">
+              <span className="font-medium tabular-nums">{level.value}</span> {level.label}
+            </span>
+          ))}
+        </div>
+
         <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
           <CompanyWise filters={filters} companies={companies} />
           <RoadmapFiltersPanel
@@ -203,6 +216,15 @@ export default async function RoadmapPage({
             matchCount={matchCount}
             stageCount={entries.length}
           />
+          {!nextUp.done && nextUp.problems[0] && (
+            <a
+              href={`#placement-${nextUp.stageId}-${nextUp.problems[0].id}`}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border bg-card px-3 text-sm font-medium shadow-xs transition-colors hover:border-primary/50"
+            >
+              <Target className="size-4 text-muted-foreground" />
+              Go to upcoming problem
+            </a>
+          )}
         </div>
 
         {blocks.length === 0 && (

@@ -109,6 +109,7 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
         return (
           <PlacementRow
             key={placement.problem_id + placement.stage_id}
+            id={`placement-${placement.stage_id}-${problem.id}`}
             problemId={problem.id}
             stageId={placement.stage_id}
             isSolved={placement.is_solved}
