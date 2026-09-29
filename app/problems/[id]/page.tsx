@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ExternalLink, Lock } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Lightbulb, Lock } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { confidenceLabel } from '@/lib/confidence';
 import { getProblemLinks } from '@/lib/itemLinks';
@@ -89,6 +89,18 @@ export default async function ProblemPage({ params }: { params: { id: string } }
                 title="Open on LeetCode"
               >
                 <ExternalLink className="size-4" />
+              </a>
+            )}
+            {problem.neetcode_link && (
+              <a
+                href={problem.neetcode_link}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Open solution on NeetCode"
+                title="Open solution on NeetCode"
+              >
+                <Lightbulb className="size-4" />
               </a>
             )}
           </div>

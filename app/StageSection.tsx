@@ -176,6 +176,19 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
                 </a>
               )}
 
+              {problem.neetcode_link && (
+                <a
+                  href={problem.neetcode_link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-primary"
+                  title="Open solution on NeetCode"
+                  aria-label={`Open ${problem.title} solution on NeetCode`}
+                >
+                  <Lightbulb className="size-3.5" />
+                </a>
+              )}
+
               <ProblemTags problemId={problem.id} appliedIds={problem.tags.map((t) => t.tag_id)} />
             </div>
               <ProblemCompanies companies={problem.companies} />

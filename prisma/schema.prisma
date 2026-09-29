@@ -58,6 +58,7 @@ model Problem {
   leetcode_id     Int?        @unique
   difficulty      Difficulty?
   source_link     String?     @unique
+  neetcode_link   String?     @unique
   acceptance_rate Float?
   frequency       Float?
   is_solved       Boolean     @default(false)
