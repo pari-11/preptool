@@ -81,13 +81,13 @@ export function ProblemTags({
           aria-label="Edit tags"
           title="Tags"
           className={cn(
-            'inline-flex shrink-0 items-center gap-1.5 rounded-md text-muted-foreground/70 transition-colors hover:text-primary data-popup-open:text-primary',
+            'inline-flex shrink-0 items-center gap-1.5 rounded-md text-muted-foreground/70 transition-colors hover:text-sky-500 data-popup-open:text-sky-500 dark:hover:text-sky-400 dark:data-popup-open:text-sky-400',
             variant === 'full'
               ? 'h-7 border bg-background px-2.5 text-sm font-medium hover:border-primary'
               : 'size-5 justify-center'
           )}
         >
-          {variant === 'full' ? <Plus className="size-3.5" /> : <TagIcon className="size-3.5" />}
+          {variant === 'full' ? <Plus className="size-3.5" /> : <TagIcon className="size-4" />}
           {variant === 'full' && 'Add tag'}
         </PopoverTrigger>
         <PopoverContent className="w-64 p-1.5">

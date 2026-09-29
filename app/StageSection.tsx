@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
-import { ExternalLink, Info, Lightbulb, Lock } from 'lucide-react';
+import { ExternalLink, Info, Lightbulb, Lock, Star } from 'lucide-react';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -145,9 +145,10 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
               </Link>
 
               {placement.is_priority && (
-                <span className="text-amber-500" title="Priority" aria-label="Priority">
-                  ★
-                </span>
+                <Star
+                  className="size-3.5 shrink-0 fill-amber-500 text-amber-500"
+                  aria-label="Priority"
+                />
               )}
 
               {problem.is_premium && (
@@ -168,11 +169,11 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
                   href={problem.source_link}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-primary"
+                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-sky-500 dark:hover:text-sky-400"
                   title="Open on LeetCode"
                   aria-label={`Open ${problem.title} on LeetCode`}
                 >
-                  <ExternalLink className="size-3.5" />
+                  <ExternalLink className="size-4" />
                 </a>
               )}
 
@@ -181,11 +182,11 @@ export function ProblemList({ problems }: { problems: StageProblems }) {
                   href={problem.neetcode_link}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-primary"
+                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-sky-500 dark:hover:text-sky-400"
                   title="Open solution on NeetCode"
                   aria-label={`Open ${problem.title} solution on NeetCode`}
                 >
-                  <Lightbulb className="size-3.5" />
+                  <Lightbulb className="size-4" />
                 </a>
               )}
 

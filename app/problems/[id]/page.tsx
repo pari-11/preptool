@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ExternalLink, Lightbulb, Lock } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Lightbulb, Lock, Star } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { confidenceLabel } from '@/lib/confidence';
 import { getProblemLinks } from '@/lib/itemLinks';
@@ -153,9 +153,7 @@ export default async function ProblemPage({ params }: { params: { id: string } }
                       </Badge>
                     )}
                     {placement.is_priority && (
-                      <span className="text-amber-500" title="Priority">
-                        ★
-                      </span>
+                      <Star className="size-3.5 shrink-0 fill-amber-500 text-amber-500" aria-label="Priority" />
                     )}
                   </li>
                 ))}

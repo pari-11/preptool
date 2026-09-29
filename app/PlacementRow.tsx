@@ -33,9 +33,11 @@ export function PlacementRow({
   return (
     <li
       id={id}
-      className="group scroll-mt-20 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 transition-colors hover:bg-muted/50 sm:flex-nowrap sm:px-5"
+      className="group scroll-mt-20 flex flex-wrap items-start gap-x-3 gap-y-1.5 px-4 py-2.5 transition-colors hover:bg-muted/50 sm:flex-nowrap sm:px-5"
     >
-      <SolvedCheckbox problemId={problemId} stageId={stageId} isSolved={isSolved} onToggle={setSolved} />
+      <div className="mt-0.5">
+        <SolvedCheckbox problemId={problemId} stageId={stageId} isSolved={isSolved} onToggle={setSolved} />
+      </div>
       <div className={cn('min-w-0 flex-1', isSolved && 'text-muted-foreground')}>{children}</div>
       <div className="flex basis-full items-center gap-2 pl-7 sm:basis-auto sm:pl-0">
         {meta}
