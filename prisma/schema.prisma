@@ -79,6 +79,8 @@ model Problem {
   companies ProblemCompany[]
   reviews   ReviewLog[]
   tags      ProblemTag[]
+
+  quiz_approaches QuizApproach[]
 }
 
 // User-defined labels ("Revisit", "Tricky", ...) on a problem's identity, not on a stage placement.
@@ -232,4 +234,93 @@ model ItemLink {
 
   @@index([from_type, from_id])
   @@index([to_type, to_id])
+}
+
+enum QuizApproachOrigin {
+  Standard // from a trusted solution source (NeetCode); nothing writes this yet
+  User // the user's own code
+}
+
+enum QuizQuestionOrigin {
+  Seeded // hand-written by the user and stored as given
+  Generated // reserved: written by an LLM from an approach (later slice)
+  UserEdited // reserved: a generated question the user corrected
+}
+
+// The pattern tag from docs/quiz-question-patterns.md. Questions are reviewed and dropped by
+// pattern, so every question carries exactly one.
+enum QuizCategory {
+  Intuition
+  CodeReading
+  Tracing
+  EdgeCase
+  Complexity
+  Counterfactual
+  FinalUnderstanding
+}
+
+// One way of solving a problem that a quiz is built around (spec 011). A problem can have several;
+// the first screen of a quiz asks which one the user used. `code` is the reference code the
+// questions were written against.
+model QuizApproach {
+  id            String             @id @default(cuid())
+  problem_id    String
+  name          String
+  origin        QuizApproachOrigin @default(Standard)
+  code          String?
+  solution_link String?
+  position      Int                @default(0)
+  created_at    DateTime           @default(now())
+
+  problem   Problem        @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@unique([problem_id, name])
+}
+
+// A 4-option multiple-choice question. `options` is a JSON array of strings in canonical order and
+// `correct_index` points into it; the quiz shuffles the display order every time, so neither the
+// stored order nor the key position is ever shown. `source_key` is a stable id from the seed data
+// so a re-run updates the same row instead of duplicating it. `verified` is true only when the
+// answer was checked by running the reference code (spec 011 D2), never for conceptual questions.
+model QuizQuestion {
+  id            String             @id @default(cuid())
+  approach_id   String
+  source_key    String
+  set_label     String?
+  category      QuizCategory
+  position      Int
+  text          String
+  snippet       String?
+  options       Json
+  correct_index Int
+  explanation   String?
+  // Which lines of the approach's code the explanation is about: a JSON array of matching-text specs
+  // (see lib/quizHighlight.ts), not line numbers, so it survives edits to the code. Null = none.
+  highlight     Json?
+  verified      Boolean            @default(false)
+  origin        QuizQuestionOrigin @default(Seeded)
+  created_at    DateTime           @default(now())
+
+  approach QuizApproach @relation(fields: [approach_id], references: [id], onDelete: Cascade)
+
+  @@unique([approach_id, source_key])
+  @@index([approach_id, position])
+}
+
+// One finished run of a quiz. Written once at the end; `answers` holds one object per question
+// asked ({ question_id, chosen_index, correct }) with chosen_index in the question's canonical
+// option order. Quiz results are deliberately separate from Problem.confidence (spec 011 D4).
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  approach_id    String
+  finished_at    DateTime @default(now())
+  question_count Int
+  correct_count  Int
+  answers        Json
+
+  approach QuizApproach @relation(fields: [approach_id], references: [id], onDelete: Cascade)
+
+  @@index([approach_id, finished_at])
 }

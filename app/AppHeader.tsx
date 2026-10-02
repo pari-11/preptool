@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, LayoutDashboard, Route, UserRound } from 'lucide-react';
+import { BrainCircuit, Building2, LayoutDashboard, Route, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchBox } from './SearchBox';
@@ -16,6 +16,7 @@ const LINKS = [
     isActive: (p: string) => p.startsWith('/roadmap') || p.startsWith('/problems'),
   },
   { href: '/companies', label: 'Companies', icon: Building2, isActive: (p: string) => p.startsWith('/companies') },
+  { href: '/quiz', label: 'Quiz', icon: BrainCircuit, isActive: (p: string) => p.startsWith('/quiz') },
 ];
 
 export function AppHeader() {
@@ -36,6 +37,8 @@ export function AppHeader() {
               key={href}
               href={href}
               aria-current={isActive(pathname) ? 'page' : undefined}
+              aria-label={label}
+              title={label}
               className={cn(
                 'flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
                 isActive(pathname)
@@ -44,7 +47,7 @@ export function AppHeader() {
               )}
             >
               <Icon className="size-4" />
-              {label}
+              <span className="hidden lg:inline">{label}</span>
             </Link>
           ))}
         </nav>
@@ -52,6 +55,8 @@ export function AppHeader() {
           <SearchBox />
           <Link
             href="/profile"
+            aria-label="Profile"
+            title="Profile"
             aria-current={pathname.startsWith('/profile') ? 'page' : undefined}
             className={cn(
               'flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
@@ -61,7 +66,7 @@ export function AppHeader() {
             )}
           >
             <UserRound className="size-4" />
-            Profile
+            <span className="hidden lg:inline">Profile</span>
           </Link>
           <ThemeToggle />
         </div>

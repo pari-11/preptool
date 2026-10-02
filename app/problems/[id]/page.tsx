@@ -4,8 +4,10 @@ import { ArrowLeft, ExternalLink, Lightbulb, Lock, Star } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { confidenceLabel } from '@/lib/confidence';
 import { getProblemLinks } from '@/lib/itemLinks';
+import { getQuizPrompt } from '@/lib/quiz';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SolvedCheckbox } from '@/app/SolvedCheckbox';
 import { ConfidencePicker } from '@/app/ConfidencePicker';
@@ -37,7 +39,7 @@ const formatDateTime = (d: Date) =>
   d.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default async function ProblemPage({ params }: { params: { id: string } }) {
-  const [problem, tagRows, links] = await Promise.all([
+  const [problem, tagRows, links, quiz] = await Promise.all([
     prisma.problem.findUnique({
       where: { id: params.id },
       include: {
@@ -52,6 +54,7 @@ export default async function ProblemPage({ params }: { params: { id: string } }
       include: { _count: { select: { problems: true } } },
     }),
     getProblemLinks(params.id),
+    getQuizPrompt(params.id),
   ]);
   if (!problem) notFound();
   const reviewCounts = { Solved: 0, Revised: 0, Revisited: 0 };
@@ -199,6 +202,26 @@ export default async function ProblemPage({ params }: { params: { id: string } }
               <ConfidencePicker problemId={problem.id} current={problem.confidence} showLabels />
             </CardContent>
           )}
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base">Quiz</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {quiz ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href={`/quiz/${problem.id}`} className={buttonVariants({ size: 'lg' })}>
+                  Go to Quiz
+                </Link>
+                <span className="text-sm text-muted-foreground">
+                  Check you understand the approach you used, not just that it passed.
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No quiz for this problem yet.</p>
+            )}
+          </CardContent>
         </Card>
 
         <Card className="shadow-sm">

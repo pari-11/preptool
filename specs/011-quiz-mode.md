@@ -1,6 +1,6 @@
 # Spec 011 — Quiz Mode (post-solve understanding quiz)
 
-Status: Draft — not built. Rewritten 2026-10-01 around the user's description; the earlier 10-second flashcard design is dropped. The source of reference solutions is **unresolved** (see Open items), so this cannot be built yet.
+Status: Draft — not built. Rewritten 2026-10-01 around the user's description; the earlier 10-second flashcard design is dropped. Updated 2026-10-02: reference-solution source chosen (NeetCode repo, D10), language fixed to C++ for now (D11), and the build order set to a hand-seeded first slice (D12) before any LLM generation.
 Depends on: 005 (write path: solve ticking, `confidence`, `ReviewLog`), 010 (`/problems/[id]` page layout, header nav).
 Phase: not yet placed in CLAUDE.local.md's phase list; the user decides where it lands.
 Companion file: [docs/quiz-question-patterns.md](../docs/quiz-question-patterns.md) — the full taxonomy of question types the user wants, taken from their asteroid-collision samples. That file defines *what kind of questions*; this spec defines the feature around them.
@@ -33,11 +33,17 @@ D6. **Single implicit user**, as everywhere else.
 D7. **Two question sources.** *Standard approaches* get pre-built, stored questions from the offline batch (D1–D3); no LLM at quiz time. *User-added approaches* are the one place an LLM is used: when the user saves pasted code, one call writes the questions from that code following the patterns file, and the result is stored and reused (regenerated only if the code is edited). This is the app's first LLM use; CLAUDE.local.md currently says no LLM in v1, so that note changes when this is built. It needs an Anthropic API key in `.env`.
 D8. **User-approach questions are not machine-verifiable** (running arbitrary pasted code in any language is out). They are labelled "generated from your code", `verified = false`, and the user can flag or delete a bad question. If the pasted code is itself wrong, the questions inherit that; a note on the screen says so.
 D9. **LLM provider: a fallback chain behind one function, not yet confirmed.** Nothing here is final; the user is still deciding. Current leaning, to be confirmed after checking each provider's console limits at signup: **Mistral (primary) → Gemini → NVIDIA NIM → Z.ai**. All four expose an OpenAI-style API, so each is a base URL, key and model name in `.env`; a provider with no key is skipped; a rate-limit error, timeout or failure moves to the next; if all fail the user sees "couldn't generate questions, try again" and their saved code is untouched. Each stored question set records which model wrote it. Free-tier details are in the table below.
+D10. **Reference-solution source: NeetCode's public repo, [neetcode-gh/leetcode](https://github.com/neetcode-gh/leetcode)** (MIT, active). Checked against the user's roadmap on 2026-10-02 by cloning it: 154 roadmap problems; 149 are on NeetCode's list (not: LC 16, 442, 643, 713, 2461); 149 have a NeetCode video ID and 148 a C++ file. Its `articles/` folder gives named approaches with intuition, algorithm, tabbed code and time/space complexity: **82 roadmap problems matched by slug have an article, each with 2–7 approaches (10 with 2, 23 with 3, 27 with 4, 14 with 5, 5 with 6, 3 with 7), all with a C++ tab and complexity text.** The "View solution" link (F2a) comes from `.problemSiteData.json` (NeetCode page slug and video ID), so no scraping. **Known gap, deferred by the user:** the other 67 problems have no article matched yet, because NeetCode renamed many articles (LC 217 is `duplicate-integer.md`, LC 121 is `buy-and-sell-crypto.md`) while its site data still uses LeetCode slugs; some of those 67 likely have a renamed article, so the real ceiling is between 82 and 149 and needs a one-time title-matching table. Until then those problems show "no quiz yet" with the NeetCode video link, and "Add my approach" still works. One caveat: the repo's MIT licence covers `articles/` as far as the README says, but no separate terms for the article text were found either way. A second MIT source, `walkccc/LeetCode` (C++, Python, Java), was identified but not measured; `doocs/leetcode` is CC-BY-SA-4.0 and is avoided.
+D11. **Language: C++ only for now.** Solution code, trace answers and questions are all C++. Later, the user's solving language becomes an option asked during onboarding, and the quiz content is linked on that basis. Nothing about it is built now.
+D12. **Build order: hand-seeded first (option B), LLM generation after.** The first slice needs no LLM and no API key: the user's own asteroid-collision questions (~55, two sets: the first 15, then the next 40) are stored as seed data, and the quiz flow is built around them (popup after ticking, "Go to Quiz", Quiz nav page, approach picker with NeetCode links, shuffled MCQs, feedback, scoring, saved attempts). The user tests the flow and reviews the questions before any generation spend; the LLM batch (standard approaches) and "Add my approach" generation follow once the flow feels right.
+D13. **Seeded asteroid questions attach to a "Stack (your solution)" approach** holding the user's own code (the `destroyed` / `abs` / `reverse` version the questions were written against), not NeetCode's article approach, which uses a different stack solution. NeetCode's standard approach for LC 735 gets generated questions later.
+D14. **Every question is tagged with a pattern category** from [docs/quiz-question-patterns.md](../docs/quiz-question-patterns.md) (intuition, code reading, tracing, complexity, edge case, counterfactual, final understanding). The user will review all the asteroid questions in the app, one pattern at a time if they like; any *pattern* they dislike is dropped for good, and that rule is recorded in the patterns file so later generation inherits it. Both seed sets are stored as given, **overlaps included** — the user reviews and prunes; nothing is deduplicated silently.
+D15. **Answer keys for the seed are derived by tracing the user's code**, since the samples carry no key. The correct option is shuffled to a random position every time (in the samples it was always A). Any question whose answer is unclear from the code is flagged for the user, not guessed.
 
-## Data (outline, to be finalised once the source is chosen)
+## Data (outline)
 
 - A per-problem **approach** record: problem, approach name, ordered, reference code, key idea, time and space complexity, solution link (nullable, F2a), `origin` (`standard` | `user`). A user approach stores the pasted code and optional name; a standard one is created only by the batch script.
-- A per-approach **question** record: category (from the patterns file), difficulty tier, question text, optional code snippet, four options with the correct one marked, explanation, `verified` flag (true when the answer was computed by executing the reference code), `origin` (`imported` | `generated` | `user-edited`).
+- A per-approach **question** record: category (the pattern tag, D14), difficulty tier, question text, optional code snippet, four options with the correct one marked, explanation, `verified` flag (true when the answer was computed by executing the reference code), `origin` (`imported` | `generated` | `user-edited`).
 - A **quiz attempt** record: problem, approach chosen, started/finished at, score, and the per-question answers.
 - All additive migrations; no change to existing tables or queries.
 
@@ -62,6 +68,8 @@ Out of scope: generating quizzes for unsolved or non-LeetCode items; quiz result
 
 ## Acceptance criteria
 
+- [ ] **First slice (D12):** the ~55 asteroid-collision questions are stored under a "Stack (your solution)" approach for LC 735, each tagged with a pattern category, and a review view lists them all, filterable by pattern.
+- [ ] Every seeded question's stored answer matches a trace of the user's code (D15); the correct option appears in a different position across runs.
 - [ ] Ticking a problem solved opens its quiz (dismissable in one click); ticking itself still works whether or not the quiz is opened.
 - [ ] Every problem page has a "Go to Quiz" button that opens that problem's quiz; it is disabled or hidden with an explanation for a problem that has no quiz yet.
 - [ ] A Quiz section in the header lists problems that have quizzes and opens any one.
@@ -79,17 +87,17 @@ Out of scope: generating quizzes for unsolved or non-LeetCode items; quiz result
 
 ## Verification
 
-Not yet built. When built: all writes tested on an isolated rig, never the live database; the answer-verification step (D2) tested with fixtures including a deliberately wrong key; note anything not clicked in a real browser.
+Not yet built. When built (first slice first): all writes tested on an isolated rig, never the live database; the answer-verification step (D2) tested with fixtures including a deliberately wrong key; note anything not clicked in a real browser.
 
 ## Open items
 
-- **Source of reference solutions per approach (blocking).** The user does not want to paste them by hand and does not trust LLM-only solutions. Candidates to research before choosing: NeetCode's public solutions repository, other free solution sets. Each needs a licence check and a coverage check against the roadmap's problems.
+- **Closing the 67-problem article gap (D10)**: a one-time mapping from LeetCode ID to NeetCode's renamed article files, by title matching and review. The user said the gaps matter but to look at them later.
 - How the *standard* approaches' questions get authored: the batch script needs either an LLM writing the conceptual questions from verified reference code, or another authoring route. D7 settles the LLM for user-added approaches only.
 - **Provider choice and order (D9) is not confirmed**; check real limits in each console at signup, and test question quality on the asteroid samples before settling.
 - Which languages "Add my approach" accepts (any text is storable; the LLM handles most), and a size limit on pasted code.
 - Whether to skip unverified user-approach questions instead of showing them labelled (D8).
 - Whether the user reviews generated questions before they appear, or trusts verified ones.
 - Quiz length: the samples ran 15–40 questions, likely too many for one sitting; options are tiers (basic first, hard optional) or a cap per attempt.
-- Meaning of the `**` option markers in the user's samples (see the patterns file).
-- Whether to start with the roadmap's ~155 problems or only ones the user has solved.
+- Meaning of the `**` option markers in the user's samples (see the patterns file); the user did not follow the question and it is being re-asked.
+- Whether the batch (after the seed slice) starts with the 82 matched problems or only ones the user has solved.
 - Where the feature sits in CLAUDE.local.md's phase list.

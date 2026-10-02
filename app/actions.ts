@@ -7,6 +7,7 @@ import { clearSolved, recordReview, recordSolve, undoLastRevisit } from '@/lib/s
 import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor } from '@/lib/tags';
 import { search, searchProblems } from '@/lib/search';
 import { createProblemLink, deleteItemLink } from '@/lib/itemLinks';
+import { getQuizPrompt, recordQuizAttempt, type SubmittedAnswer } from '@/lib/quiz';
 import type { ItemLinkType } from '@prisma/client';
 
 function revalidateAll() {
@@ -199,4 +200,18 @@ export async function addProblemLink(problemId: string, targetProblemId: string,
 export async function removeProblemLink(linkId: string) {
   await deleteItemLink(linkId);
   revalidatePath('/problems/[id]', 'page');
+}
+
+// Read-only: does this problem have a quiz? Asked right after a tick so the "Quiz this problem?"
+// popup only appears for problems that have one (spec 011 F1).
+export async function checkQuizPrompt(problemId: string) {
+  return getQuizPrompt(problemId);
+}
+
+// Stores a finished quiz run (spec 011). Scored on the server; see recordQuizAttempt.
+export async function submitQuizAttempt(approachId: string, answers: SubmittedAnswer[]) {
+  const attempt = await recordQuizAttempt(approachId, answers);
+  revalidatePath('/quiz');
+  revalidatePath('/quiz/[problemId]', 'page');
+  return attempt ? { correct: attempt.correct_count, total: attempt.question_count } : null;
 }
