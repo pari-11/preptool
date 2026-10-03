@@ -1,6 +1,7 @@
 import type { QuizCategory } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { asHighlight, describeLines, resolveHighlight, type HighlightSpec } from '@/lib/quizHighlight';
+import { cleanComment, isFeedbackReason, type FeedbackReason, type QuestionFeedback } from '@/lib/quizFeedback';
 
 // Spec 011. The quiz tables are read here; the only write is the finished attempt.
 
@@ -9,6 +10,14 @@ export { QUIZ_CATEGORIES, categoryLabel, isQuizCategory } from '@/lib/quizCatego
 // The size of a "quick" quiz. 55 questions in one sitting is too many, so the picker offers a
 // random sample (still shown easiest to hardest) or the full set.
 export const QUICK_QUIZ_SIZE = 10;
+
+// Only the open flag matters in the UI: the newest feedback row that has not been resolved.
+const OPEN_FEEDBACK = { where: { resolved_at: null }, orderBy: { created_at: 'desc' as const }, take: 1 };
+
+function asFeedback(rows: { reason: string; comment: string | null }[]): QuestionFeedback | null {
+  const row = rows[0];
+  return row && isFeedbackReason(row.reason) ? { reason: row.reason, comment: row.comment } : null;
+}
 
 function asOptions(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String) : [];
@@ -140,6 +149,8 @@ export type PlayQuestion = {
   // Matching-text specs for the lines of the approach's code this explanation is about; resolved
   // against the code in the browser when the code panel is open. Null = no highlight.
   highlight: HighlightSpec[] | null;
+  // The open flag on this question, if any (spec 011 feedback); the user can edit it while playing.
+  feedback: QuestionFeedback | null;
 };
 
 // A quiz run: all questions, or a random sample of `limit`, always shown easiest to hardest, with
@@ -154,7 +165,7 @@ export async function getQuizRun(approachId: string, limit: number | null) {
       code: true,
       problem_id: true,
       problem: { select: { title: true } },
-      questions: { orderBy: { position: 'asc' } },
+      questions: { orderBy: { position: 'asc' }, include: { feedback: OPEN_FEEDBACK } },
     },
   });
   if (!approach) return null;
@@ -173,6 +184,7 @@ export async function getQuizRun(approachId: string, limit: number | null) {
     correctIndex: q.correct_index,
     explanation: q.explanation,
     highlight: asHighlight(q.highlight),
+    feedback: asFeedback(q.feedback),
   }));
   return {
     approachId: approach.id,
@@ -199,13 +211,14 @@ export type ReviewQuestion = {
   // 1-based lines of the approach's code the explanation highlights, e.g. "12–14, 25"; null = none.
   highlightedLines: string | null;
   highlight: HighlightSpec[] | null;
+  feedback: QuestionFeedback | null;
   verified: boolean;
 };
 
 // Every stored question for an approach in the order a quiz would show them, optionally narrowed
 // to one pattern. Powers the review page, where the user reads the questions and decides which
 // patterns to keep.
-export async function getApproachReview(approachId: string, category: QuizCategory | null) {
+export async function getApproachReview(approachId: string, category: QuizCategory | null, flaggedOnly = false) {
   const approach = await prisma.quizApproach.findUnique({
     where: { id: approachId },
     select: {
@@ -214,14 +227,16 @@ export async function getApproachReview(approachId: string, category: QuizCatego
       code: true,
       problem_id: true,
       problem: { select: { title: true } },
-      questions: { orderBy: { position: 'asc' } },
+      questions: { orderBy: { position: 'asc' }, include: { feedback: OPEN_FEEDBACK } },
     },
   });
   if (!approach) return null;
   const all = approach.questions;
+  const flaggedTotal = all.filter((q) => q.feedback.length > 0).length;
   const counts = new Map<QuizCategory, number>();
   for (const q of all) counts.set(q.category, (counts.get(q.category) ?? 0) + 1);
-  const shown = category ? all.filter((q) => q.category === category) : all;
+  let shown = category ? all.filter((q) => q.category === category) : all;
+  if (flaggedOnly) shown = shown.filter((q) => q.feedback.length > 0);
   const questions: ReviewQuestion[] = shown.map((q) => ({
     id: q.id,
     category: q.category,
@@ -233,6 +248,7 @@ export async function getApproachReview(approachId: string, category: QuizCatego
     explanation: q.explanation,
     highlightedLines: approach.code ? describeLines(resolveHighlight(approach.code, asHighlight(q.highlight))) || null : null,
     highlight: asHighlight(q.highlight),
+    feedback: asFeedback(q.feedback),
     verified: q.verified,
   }));
   return {
@@ -242,6 +258,7 @@ export async function getApproachReview(approachId: string, category: QuizCatego
     problemId: approach.problem_id,
     problemTitle: approach.problem.title,
     total: all.length,
+    flaggedTotal,
     counts,
     questions,
   };
@@ -272,4 +289,26 @@ export async function recordQuizAttempt(approachId: string, submitted: Submitted
   return prisma.quizAttempt.create({
     data: { approach_id: approachId, question_count: answers.length, correct_count: correct, answers },
   });
+}
+
+// Saves the user's flag on a question: edits the open one if there is one, otherwise adds it. At
+// most one open flag per question, so the flag panel is always "the" feedback for that question.
+export async function saveQuestionFeedback(questionId: string, reason: string, rawComment: string | null) {
+  if (!isFeedbackReason(reason)) throw new Error('Pick a reason for the flag.');
+  const comment = cleanComment(rawComment);
+  const question = await prisma.quizQuestion.findUnique({ where: { id: questionId }, select: { id: true } });
+  if (!question) throw new Error('That question no longer exists.');
+  const open = await prisma.quizQuestionFeedback.findFirst({
+    where: { question_id: questionId, resolved_at: null },
+    orderBy: { created_at: 'desc' },
+  });
+  const data = { reason: reason as FeedbackReason, comment };
+  if (open) await prisma.quizQuestionFeedback.update({ where: { id: open.id }, data });
+  else await prisma.quizQuestionFeedback.create({ data: { question_id: questionId, ...data } });
+  return { reason: data.reason, comment } satisfies QuestionFeedback;
+}
+
+// Removes the open flag (an accidental or no-longer-wanted one). Resolved history is left alone.
+export async function removeQuestionFeedback(questionId: string) {
+  await prisma.quizQuestionFeedback.deleteMany({ where: { question_id: questionId, resolved_at: null } });
 }

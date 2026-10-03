@@ -13,10 +13,12 @@ export default async function QuizReviewPage({
   searchParams,
 }: {
   params: { problemId: string; approachId: string };
-  searchParams: { pattern?: string };
+  searchParams: { pattern?: string; flagged?: string };
 }) {
-  const category = isQuizCategory(searchParams.pattern) ? searchParams.pattern : null;
-  const review = await getApproachReview(params.approachId, category);
+  const flaggedOnly = searchParams.flagged === '1';
+  // The Flagged filter and a pattern filter are separate views, not combined.
+  const category = !flaggedOnly && isQuizCategory(searchParams.pattern) ? searchParams.pattern : null;
+  const review = await getApproachReview(params.approachId, category, flaggedOnly);
   if (!review || review.problemId !== params.problemId) notFound();
 
   const chips = QUIZ_CATEGORIES.filter((c) => review.counts.has(c.key)).map((c) => ({
@@ -35,6 +37,8 @@ export default async function QuizReviewPage({
       total={review.total}
       chips={chips}
       category={category}
+      flaggedOnly={flaggedOnly}
+      flaggedTotal={review.flaggedTotal}
       code={review.code}
       questions={review.questions.map((q) => ({
         id: q.id,
@@ -45,6 +49,7 @@ export default async function QuizReviewPage({
         correctIndex: q.correctIndex,
         explanation: q.explanation,
         highlight: q.highlight,
+        feedback: q.feedback,
         verified: q.verified,
       }))}
     />

@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, Code, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Check, Code, Flag, ShieldCheck } from 'lucide-react';
 import type { QuizCategory } from '@prisma/client';
 import { categoryLabel } from '@/lib/quizCategories';
 import { describeLines, resolveHighlight, type HighlightSpec } from '@/lib/quizHighlight';
+import { reasonLabel, type QuestionFeedback } from '@/lib/quizFeedback';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { CodePanel } from '@/app/quiz/CodePanel';
+import { FlagButton } from '@/app/quiz/FlagButton';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -22,6 +24,7 @@ type Question = {
   correctIndex: number;
   explanation: string | null;
   highlight: HighlightSpec[] | null;
+  feedback: QuestionFeedback | null;
   verified: boolean;
 };
 
@@ -39,6 +42,8 @@ export function ReviewWorkspace({
   total,
   chips,
   category,
+  flaggedOnly,
+  flaggedTotal,
   code,
   questions,
 }: {
@@ -49,11 +54,21 @@ export function ReviewWorkspace({
   total: number;
   chips: Chip[];
   category: QuizCategory | null;
+  flaggedOnly: boolean;
+  // How many questions in the whole approach have an open flag (not just the ones shown).
+  flaggedTotal: number;
   code: string | null;
   questions: Question[];
 }) {
   const [showCode, setShowCode] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Flags edited on this page. Anything not in here shows what the server sent, so a filter change
+  // (which brings fresh data) never shows a stale flag.
+  const [flagEdits, setFlagEdits] = useState<Record<string, QuestionFeedback | null>>({});
+  const flagOf = (q: Question) => (q.id in flagEdits ? flagEdits[q.id] : q.feedback);
+  // The chip's count follows edits made here without waiting for a refresh.
+  const flaggedNow =
+    flaggedTotal + questions.reduce((n, q) => n + (flagOf(q) ? 1 : 0) - (q.feedback ? 1 : 0), 0);
 
   const split = showCode && code !== null;
   const selected = questions.find((q) => q.id === selectedId) ?? null;
@@ -118,11 +133,18 @@ export function ReviewWorkspace({
         </header>
 
         <nav className="flex flex-wrap gap-2" aria-label="Filter by pattern">
-          <Link href={base} className={chip(category === null)}>
+          <Link href={base} className={chip(category === null && !flaggedOnly)}>
             All <span className="tabular-nums opacity-70">{total}</span>
           </Link>
+          <Link
+            href={`${base}?flagged=1`}
+            className={chip(flaggedOnly)}
+            title="Questions you have flagged and not yet resolved"
+          >
+            <Flag className="size-3.5" /> Flagged <span className="tabular-nums opacity-70">{flaggedNow}</span>
+          </Link>
           {chips.map((c) => (
-            <Link key={c.key} href={`${base}?pattern=${c.key}`} className={chip(category === c.key)} title={c.hint}>
+            <Link key={c.key} href={`${base}?pattern=${c.key}`} className={chip(category === c.key && !flaggedOnly)} title={c.hint}>
               {c.label} <span className="tabular-nums opacity-70">{c.count}</span>
             </Link>
           ))}
@@ -151,19 +173,22 @@ export function ReviewWorkspace({
           {questions.map((q, i) => {
             const lines = code && q.highlight ? describeLines(resolveHighlight(code, q.highlight)) : '';
             const isSelected = split && q.id === selectedId;
+            const flag = flagOf(q);
             return (
               <li key={q.id}>
                 <Card
                   className={cn(
                     'shadow-sm transition-shadow',
                     split && 'cursor-pointer hover:ring-1 hover:ring-primary/40',
+                    flag && 'border-amber-400/70 dark:border-amber-600/60',
                     isSelected && 'ring-2 ring-primary'
                   )}
                   onClick={split ? () => setSelectedId(q.id) : undefined}
                   onKeyDown={
                     split
                       ? (e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
+                          // Only the card itself, not typing in the flag note or pressing its buttons.
+                          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
                             e.preventDefault();
                             setSelectedId(q.id);
                           }
@@ -187,7 +212,17 @@ export function ReviewWorkspace({
                           <ShieldCheck className="size-3.5" /> checked against your code
                         </span>
                       )}
+                      <FlagButton
+                        questionId={q.id}
+                        feedback={flag}
+                        onChange={(next) => setFlagEdits((f) => ({ ...f, [q.id]: next }))}
+                      />
                     </div>
+                    {flag?.comment && (
+                      <p className="text-xs italic text-amber-700 dark:text-amber-400">
+                        {reasonLabel(flag.reason)}: {flag.comment}
+                      </p>
+                    )}
                     <p className="text-sm font-medium leading-snug">{q.text}</p>
                     {q.snippet && (
                       <pre className="overflow-x-auto rounded-lg border bg-muted/50 px-3 py-2 font-mono text-[13px] leading-relaxed">

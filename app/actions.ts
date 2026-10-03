@@ -7,7 +7,13 @@ import { clearSolved, recordReview, recordSolve, undoLastRevisit } from '@/lib/s
 import { CUSTOM_TAG_COLOR_ORDER, MAX_TAG_NAME_LENGTH, cleanTagName, isTagColor } from '@/lib/tags';
 import { search, searchProblems } from '@/lib/search';
 import { createProblemLink, deleteItemLink } from '@/lib/itemLinks';
-import { getQuizPrompt, recordQuizAttempt, type SubmittedAnswer } from '@/lib/quiz';
+import {
+  getQuizPrompt,
+  recordQuizAttempt,
+  removeQuestionFeedback,
+  saveQuestionFeedback,
+  type SubmittedAnswer,
+} from '@/lib/quiz';
 import type { ItemLinkType } from '@prisma/client';
 
 function revalidateAll() {
@@ -214,4 +220,16 @@ export async function submitQuizAttempt(approachId: string, answers: SubmittedAn
   revalidatePath('/quiz');
   revalidatePath('/quiz/[problemId]', 'page');
   return attempt ? { correct: attempt.correct_count, total: attempt.question_count } : null;
+}
+
+// Flag a quiz question and say why (spec 011). Never touches scores or the quiz itself.
+export async function flagQuizQuestion(questionId: string, reason: string, comment: string | null) {
+  const saved = await saveQuestionFeedback(questionId, reason, comment);
+  revalidatePath('/quiz/[problemId]/[approachId]/review', 'page');
+  return saved;
+}
+
+export async function unflagQuizQuestion(questionId: string) {
+  await removeQuestionFeedback(questionId);
+  revalidatePath('/quiz/[problemId]/[approachId]/review', 'page');
 }

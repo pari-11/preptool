@@ -6,12 +6,14 @@ import { ArrowLeft, Check, Code, X } from 'lucide-react';
 import type { QuizCategory } from '@prisma/client';
 import { categoryLabel } from '@/lib/quizCategories';
 import { resolveHighlight, type HighlightSpec } from '@/lib/quizHighlight';
+import type { QuestionFeedback } from '@/lib/quizFeedback';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { submitQuizAttempt } from '@/app/actions';
 import { CodePanel } from './CodePanel';
+import { FlagButton } from './FlagButton';
 
 type Question = {
   id: string;
@@ -23,6 +25,7 @@ type Question = {
   correctIndex: number;
   explanation: string | null;
   highlight: HighlightSpec[] | null;
+  feedback: QuestionFeedback | null;
 };
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -32,7 +35,9 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 // midway stores nothing. Options arrive shuffled, so the correct one is in a random place.
 // After answering (right or wrong) the card offers the explanation, and for the user's own
 // approach a "View your solution" button splits the screen with their code beside the question,
-// and opening the explanation then highlights the lines of that code it is about.
+// and opening the explanation then highlights the lines of that code it is about. Back revisits an
+// earlier question exactly as it was left (answers are locked, so the score stays honest), and
+// every question can be flagged with a reason and a note.
 export function QuizPlayer({
   approachId,
   approachName,
@@ -60,6 +65,10 @@ export function QuizPlayer({
   const [chosen, setChosen] = useState<Record<string, number>>({});
   const [showExplanation, setShowExplanation] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  // question id -> its open flag (the saved feedback), edited through the flag button
+  const [flags, setFlags] = useState<Record<string, QuestionFeedback | null>>(() =>
+    Object.fromEntries(initialQuestions.map((q) => [q.id, q.feedback]))
+  );
   const [finished, setFinished] = useState(false);
   const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error'>('saving');
   const [, startTransition] = useTransition();
@@ -78,6 +87,13 @@ export function QuizPlayer({
   function choose(optionIndex: number) {
     if (answered) return;
     setChosen((c) => ({ ...c, [question.id]: optionIndex }));
+  }
+
+  // Revisit the previous question as it was left. Nothing is re-answered or re-scored.
+  function back() {
+    if (index === 0) return;
+    setShowExplanation(false);
+    setIndex(index - 1);
   }
 
   function next() {
@@ -227,6 +243,12 @@ export function QuizPlayer({
                 {categoryLabel(question.category)}
               </Badge>
               <span>{approachName}</span>
+              <FlagButton
+                key={question.id}
+                questionId={question.id}
+                feedback={flags[question.id] ?? null}
+                onChange={(next) => setFlags((f) => ({ ...f, [question.id]: next }))}
+              />
             </div>
 
             <p className="text-base font-medium leading-snug">{question.text}</p>
@@ -262,34 +284,43 @@ export function QuizPlayer({
               })}
             </ul>
 
-            {answered && (
+            {(answered || index > 0) && (
               <div className="flex flex-col gap-3 border-t pt-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span
-                    className={cn(
-                      'text-sm font-medium',
-                      picked === question.correctIndex ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
-                    )}
-                  >
-                    {picked === question.correctIndex ? 'Correct' : 'Not quite'}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {question.explanation && (
-                      <button
-                        type="button"
-                        onClick={() => setShowExplanation((v) => !v)}
-                        aria-expanded={showExplanation}
-                        className={buttonVariants({ variant: 'outline', size: 'lg' })}
-                      >
-                        {showExplanation ? 'Hide explanation' : 'View explanation'}
-                      </button>
-                    )}
-                    <button type="button" onClick={next} className={buttonVariants({ size: 'lg' })}>
-                      {isLast ? 'Finish' : 'Next'}
+                <div className="flex flex-wrap items-center gap-3">
+                  {index > 0 && (
+                    <button type="button" onClick={back} className={buttonVariants({ variant: 'ghost', size: 'lg' })}>
+                      <ArrowLeft className="size-4" /> Back
                     </button>
-                  </div>
+                  )}
+                  {answered && (
+                    <span
+                      className={cn(
+                        'text-sm font-medium',
+                        picked === question.correctIndex ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+                      )}
+                    >
+                      {picked === question.correctIndex ? 'Correct' : 'Not quite'}
+                    </span>
+                  )}
+                  {answered && (
+                    <div className="ml-auto flex items-center gap-2">
+                      {question.explanation && (
+                        <button
+                          type="button"
+                          onClick={() => setShowExplanation((v) => !v)}
+                          aria-expanded={showExplanation}
+                          className={buttonVariants({ variant: 'outline', size: 'lg' })}
+                        >
+                          {showExplanation ? 'Hide explanation' : 'View explanation'}
+                        </button>
+                      )}
+                      <button type="button" onClick={next} className={buttonVariants({ size: 'lg' })}>
+                        {isLast ? 'Finish' : 'Next'}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {showExplanation && question.explanation && (
+                {answered && showExplanation && question.explanation && (
                   <div className="rounded-lg border bg-muted/40 px-3 py-2.5 text-sm leading-relaxed">
                     <span className="mb-0.5 block text-xs font-medium text-muted-foreground">Explanation</span>
                     {question.explanation}

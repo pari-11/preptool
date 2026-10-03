@@ -303,7 +303,8 @@ model QuizQuestion {
   origin        QuizQuestionOrigin @default(Seeded)
   created_at    DateTime           @default(now())
 
-  approach QuizApproach @relation(fields: [approach_id], references: [id], onDelete: Cascade)
+  approach QuizApproach        @relation(fields: [approach_id], references: [id], onDelete: Cascade)
+  feedback QuizQuestionFeedback[]
 
   @@unique([approach_id, source_key])
   @@index([approach_id, position])
@@ -323,4 +324,33 @@ model QuizAttempt {
   approach QuizApproach @relation(fields: [approach_id], references: [id], onDelete: Cascade)
 
   @@index([approach_id, finished_at])
+}
+
+// Why a question was flagged. These are the user's own curation rules (docs/quiz-question-patterns.md)
+// turned into one-click reasons, so what they flag is what a later question generator should avoid.
+enum QuizFeedbackReason {
+  TooEasy
+  Repetitive
+  WrongAnswer
+  UnclearWording
+  ExplanationOff
+  HighlightOff
+  Other
+}
+
+// A flag with an optional note on one question. A question counts as flagged while it has a row with
+// resolved_at null; the UI keeps at most one such row per question (saving again edits it, removing
+// the flag deletes it). resolved_at is for when the feedback has been acted on (a question reworded,
+// pruned from the seed, and so on), which keeps the history without leaving the flag on.
+model QuizQuestionFeedback {
+  id          String             @id @default(cuid())
+  question_id String
+  reason      QuizFeedbackReason
+  comment     String?
+  created_at  DateTime           @default(now())
+  resolved_at DateTime?
+
+  question QuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@index([question_id])
 }
