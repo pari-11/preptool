@@ -14,26 +14,7 @@
 // an intermediate step or a variable's value (`destroyed`) cannot be observed from the output, and
 // conceptual ones cannot be machine-checked at all: those stay verified = false (spec 011 D2).
 
-export type SeedCategory =
-  | 'Intuition'
-  | 'CodeReading'
-  | 'Tracing'
-  | 'EdgeCase'
-  | 'Complexity'
-  | 'Counterfactual'
-  | 'FinalUnderstanding';
-
-export type SeedQuestion = {
-  key: string;
-  // 'added' = drafted with Claude at the user's request after the two hand-written sets
-  set: 'set-1' | 'set-2' | 'added';
-  category: SeedCategory;
-  text: string;
-  snippet?: string;
-  options: [string, string, string, string];
-  correct: 0 | 1 | 2 | 3;
-  check?: { input: number[]; expect: number[] };
-};
+import type { SeedQuestion } from './types';
 
 export const APPROACH_NAME = 'Stack (your solution)';
 export const LEETCODE_ID = 735;

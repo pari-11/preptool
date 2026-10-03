@@ -69,3 +69,32 @@ Reference for spec 011 (quiz mode). It records the *kinds* of questions the user
 ## Difficulty ordering
 
 Intuition and single-line code reading first, then tracing and edge cases, then complexity and counterfactuals, then the final understanding block.
+
+## Curation rules (from the user's reviews)
+
+These are the user's rules, learned by reviewing the first two quizzes (LC 735 Asteroid Collision, cut from 55 questions to 46 and LC 739 Daily Temperatures, written to them at 31). Until the generation step is automated, Claude applies them by hand; the same text is what a later LLM generator (Mistral or whichever model is configured) must be given, so it produces a set the user does not have to prune again.
+
+**Cut**
+- Trivially easy recall that no one could get wrong (for example, "what determines the direction of an asteroid").
+- "What is on the next line / what happens immediately after this line" questions, where the answer is just the next statement. Questions about the logic of what happens after what (why X must come before Y, what a branch does when a condition holds) are fine.
+- Near-duplicates: two questions on the same line, the same edge case twice, or several tracing questions built on the same one or two inputs.
+- Too many tracing questions. Keep a few distinct ones, not one per step.
+
+**Keep and lean toward**
+- Operation-counting reasoning ("how many times does pop() run for this input") -- the user rated this kind highly.
+- Logic-order questions: why one line must come before another, why a check comes first, why a push comes after the loop.
+- Each edge case covered exactly once: a single element, nothing happens (all one direction), equal values, one element resolving many, the last element, an empty-state consequence.
+- Complexity as "what is it" plus "why" pairs: time, space, why a nested loop is still linear, why the space is what it is, why it cannot beat the lower bound, and why an extra step does not change the class.
+- Counterfactuals (what breaks if this is changed or removed), written so the claim can be checked by running a changed copy of the code.
+
+**Every question carries**
+- One pattern tag from the list above, and four distinct options with plausible wrong answers; the correct option is not always first (the quiz shuffles the display order).
+- An explanation, always. It says why the right answer is right and, where useful, why the tempting wrong one is not.
+- A highlight where it helps: the lines of the user's code the explanation is about, stored as matching text, not line numbers. A question about the whole algorithm, or a bare "what is the time complexity", gets none. Do not force one.
+
+**Verification (accuracy first)**
+- The code is the source of truth. Where the function's output fixes the answer (a final result, the stack after n elements recovered from the zeros in the result, a pop count recovered from the number of nonzero answers), the answer is checked by running the user's real code. Counterfactuals run a changed copy. Anything else (conceptual, complexity, intermediate steps) is stored as unverified and labelled so.
+- A wrong key must fail loudly; a missing explanation or a highlight that matches nothing must fail the seed.
+
+**Size**
+- Around 30 questions per approach, ordered easiest to hardest. Quizzes shown to the user are a sample of 10 or the full set.
